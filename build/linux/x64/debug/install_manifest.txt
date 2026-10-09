@@ -1,0 +1,13 @@
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/focus
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/icudtl.dat
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/lib/libflutter_linux_gtk.so
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/fonts/MaterialIcons-Regular.otf
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/shaders/stretch_effect.frag
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/shaders/ink_sparkle.frag
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/kernel_blob.bin
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/FontManifest.json
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/NOTICES.Z
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/version.json
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/AssetManifest.bin
+/home/diego/Área de trabalho/Focus/build/linux/x64/debug/bundle/data/flutter_assets/NativeAssetsManifest.json
