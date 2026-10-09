@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/diego/\u00c1rea de trabalho/Focus/build/linux/x64/debug/cmake_install.cmake",
+		"/home/diego/\u00c1rea de trabalho/Focus/build/linux/x64/debug/flutter/cmake_install.cmake",
+		"/home/diego/\u00c1rea de trabalho/Focus/build/linux/x64/debug/runner/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
