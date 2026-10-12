@@ -1,54 +1,54 @@
 # ninja log v7
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/libflutter_linux_gtk.so	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_basic_message_channel.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_messenger.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_dart_project.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_engine.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_message_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_method_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_message_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_call.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_channel.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_response.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registrar.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registry.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_message_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_method_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_string_codec.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_value.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_view.h	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/flutter_linux.h	395baaf20406d677
-1	3146	1791820313582532913	flutter/_phony_	395baaf20406d677
-1	3146	1791820313582532913	/home/diego/Área de trabalho/Focus/build/linux/x64/debug/flutter/_phony_	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/libflutter_linux_gtk.so	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_basic_message_channel.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_messenger.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_dart_project.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_engine.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_message_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_method_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_message_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_call.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_channel.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_response.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registrar.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registry.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_message_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_method_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_string_codec.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_value.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_view.h	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/flutter_linux.h	395baaf20406d677
+53	3402	1791826715441365412	flutter/_phony_	395baaf20406d677
+53	3402	1791826715441365412	/home/diego/Área de trabalho/Focus/build/linux/x64/debug/flutter/_phony_	395baaf20406d677
 3146	4000	1791820316731845632	runner/CMakeFiles/focus.dir/main.cc.o	8931f65f4bcd6d8
 3146	3994	1791820316732152524	runner/CMakeFiles/focus.dir/__/flutter/generated_plugin_registrant.cc.o	6e40f250309940ec
 3146	4003	1791820316732056031	runner/CMakeFiles/focus.dir/my_application.cc.o	e6a2e8b6935f9568
-4003	4086	1791820317588759782	intermediates_do_not_run/focus	e001a899d62f1a83
-4086	4154	1791820317668820875	CMakeFiles/install.util	3f4d09d4055d6cc8
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/libflutter_linux_gtk.so	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_basic_message_channel.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_messenger.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_dart_project.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_engine.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_message_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_method_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_message_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_call.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_channel.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_response.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registrar.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registry.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_message_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_method_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_string_codec.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_value.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_view.h	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/flutter_linux.h	395baaf20406d677
-1	2408	1791820418598279570	flutter/_phony_	395baaf20406d677
-1	2408	1791820418598279570	/home/diego/Área de trabalho/Focus/build/linux/x64/debug/flutter/_phony_	395baaf20406d677
-2409	2474	1791820421008367869	intermediates_do_not_run/focus	e001a899d62f1a83
-2474	2547	1791820421071713759	CMakeFiles/install.util	3f4d09d4055d6cc8
+3402	3776	1791826718795901849	intermediates_do_not_run/focus	e001a899d62f1a83
+3776	3852	1791826719164786211	CMakeFiles/install.util	3f4d09d4055d6cc8
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/libflutter_linux_gtk.so	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_basic_message_channel.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_binary_messenger.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_dart_project.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_engine.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_message_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_json_method_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_message_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_call.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_channel.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_method_response.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registrar.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_plugin_registry.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_message_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_standard_method_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_string_codec.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_value.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/fl_view.h	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/linux/flutter/ephemeral/flutter_linux/flutter_linux.h	395baaf20406d677
+2	2600	1791831357486627943	flutter/_phony_	395baaf20406d677
+2	2600	1791831357486627943	/home/diego/Área de trabalho/Focus/build/linux/x64/debug/flutter/_phony_	395baaf20406d677
+2600	2662	1791831360086846387	intermediates_do_not_run/focus	e001a899d62f1a83
+2662	2744	1791831360145694576	CMakeFiles/install.util	3f4d09d4055d6cc8
