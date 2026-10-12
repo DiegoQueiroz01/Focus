@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:focus/views/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,14 +17,25 @@ class _LoginScreenState extends State<LoginScreen> {
     String senha = _senhaController.text;
 
     if (name == 'user' && senha == 'admin') {
-      print('Bem-vindo!');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
     } else {
-      print('Acesso negado. Usuário ou senha incorretos.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email ou senha inválidos!'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   void _entrarSemLogin() {
-    print('Acessando como visitante. Alguns recursos são limitados nesse modo.');
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
   }
 
   @override
