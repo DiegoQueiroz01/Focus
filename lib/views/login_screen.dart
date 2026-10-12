@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login - Focus'),
+        title: const Text('Focus'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -57,6 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _fazerLogin,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 59, 249, 66),
+              ),
               child: const Text('Entrar'),
             ),
             TextButton(
