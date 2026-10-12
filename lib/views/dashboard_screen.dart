@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:focus/views/treinos_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -8,9 +9,14 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _indiceAtual = 0; //controla a barra de navegação inferior da tela
+  int _indiceAtual = 0; // controla a barra de navegação inferior da tela
 
-  //função para a barra inferior
+  final List<Widget> _telas = [
+    const PainelResumo(),
+    const TreinoScreen(),
+  ];
+  
+  // função para a barra inferior
   void _aoTocarNaBarra(int index){
     setState(() {
       _indiceAtual = index;
@@ -20,12 +26,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Minha evolução'),
-        centerTitle: true,
-      ),
+      body: _telas[_indiceAtual],
 
-      //Seção de resumo da semana
+      // Barra de navegação
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _indiceAtual,
+        onTap: _aoTocarNaBarra,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_alt),
+            label: 'Treinos',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class PainelResumo extends StatelessWidget {
+  const PainelResumo({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Meu Progresso')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -35,42 +63,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded( child: Card( elevation: 4, child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: const [
-                      Icon(Icons.timer, size:40, color: Colors.blue),
-                      SizedBox(height: 8),
-                      Text('Tempo Total: ', style: TextStyle(color: Colors.grey)),
-                      Text('4h 30m', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    ],
+                Expanded(
+                  child: Card( 
+                    elevation: 4, 
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: const [
+                          Icon(Icons.timer, size:40, color: Colors.blue),
+                          SizedBox(height: 8),
+                          Text('Tempo Total: ', style: TextStyle(color: Colors.grey)),
+                          Text('4h 30m', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                ),
                 ),
                 const SizedBox(width: 16),
 
                 // Séries totais
                 Expanded(
-                  child: Card( elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: const [
-                        Icon(Icons.fitness_center, size:40, color: Colors.orange),
-                        SizedBox(height: 8),
-                        Text('Séries Totais: ', style: TextStyle(color: Colors.grey)),
-                        Text('85', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                      ],
+                  child: Card( 
+                    elevation: 4,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: const [
+                          Icon(Icons.fitness_center, size:40, color: Colors.orange),
+                          SizedBox(height: 8),
+                          Text('Séries Totais: ', style: TextStyle(color: Colors.grey)),
+                          Text('85', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
-                  ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 32),
 
-            //Histórico
+            // Histórico
             const Text('Últimas Atividades', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
@@ -100,22 +132,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-      ),
-
-      //Barra de navegação
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _indiceAtual,
-        onTap: _aoTocarNaBarra,
-        items: const[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Treino',
-          ),
-        ],
       ),
     );
   }
