@@ -1,0 +1,16 @@
+{
+    "usuarios": [
+        {
+            "id": "1",
+            "nome": "User",
+            "senha": "admin",
+            "tipo_acesso": "admin"
+        },
+        {
+            "id": "2",
+            "nome": "User Visitante",
+            "senha": "",
+            "tipo_acesso": "convidado"
+        }
+    ]
+}

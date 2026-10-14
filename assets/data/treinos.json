@@ -1,0 +1,35 @@
+{
+  "historico_treinos": [
+    {
+      "id": "t1",
+      "nomeSessao": "Treino A - Peito e Tríceps",
+      "tipo": "Musculação",
+      "data": "Ontem",
+      "tempoTotalMinutos": 70,
+      "seriesTotais": 24,
+      "exercicios": [
+        { "nome": "Supino Reto", "series": 4, "cargaKg": 30, "repeticoes": 10 },
+        { "nome": "Crucifixo", "series": 4, "cargaKg": 14, "repeticoes": 12 },
+        { "nome": "Tríceps Polia", "series": 4, "cargaKg": 25, "repeticoes": 10 }
+      ]
+    },
+    {
+      "id": "t2",
+      "nomeSessao": "Cardio em bicicleta (Casa)",
+      "tipo": "Cardio",
+      "data": "Quarta-feira",
+      "tempoTotalMinutos": 30,
+      "seriesTotais": 0,
+      "exercicios": []
+    },
+    {
+      "id": "t3",
+      "nomeSessao": "Corrida Leve",
+      "tipo": "Cardio",
+      "data": "Segunda-feira",
+      "tempoTotalMinutos": 30,
+      "seriesTotais": 0,
+      "exercicios": []
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:focus/views/dashboard_screen.dart';
+import 'package:focus/service/json_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,19 +13,33 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
 
-  void _fazerLogin() {
+  void _fazerLogin() async {
     String name = _usernameController.text;
     String senha = _senhaController.text;
 
-    if (name == 'user' && senha == 'admin') {
+    final jsonService = JsonService();
+    List<dynamic> listaUsuarios = await jsonService.lerUsuarios();
+
+    bool usuarioEncontrado = false;
+
+    for (var usuario in listaUsuarios) {
+      if ((usuario['nome'] == name) && usuario['senha'] == senha) {
+        usuarioEncontrado = true;
+        break;
+      }
+    }
+
+    if (usuarioEncontrado) {
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const DashboardScreen()),
       );
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Email ou senha inválidos!'),
+          content: Text('Nome ou senha inválidos!'),
           backgroundColor: Colors.red,
         ),
       );
@@ -33,9 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _entrarSemLogin() {
     Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-      );
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardScreen()),
+    );
   }
 
   @override
