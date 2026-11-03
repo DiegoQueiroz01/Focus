@@ -1,32 +1,30 @@
 # Focus
 
-O **Focus** é um aplicativo mobile desenvolvido em Flutter para acompanhamento e gestão de treinos de musculação e atividades aeróbicas. O projeto foi desenvolvido como requisito de avaliação prática para a disciplina de Desenvolvimento Mobile.
+O **Focus** é um aplicativo mobile desenvolvido em Flutter para acompanhamento e gestão de treinos de musculação e atividades aeróbicas, com back-end próprio em Python (FastAPI + PostgreSQL) executado via Docker.
 
 ---
 ## 📱 Funcionalidades
 
-- **Autenticação Simulada (Mock Login):**
-  - Validação de acesso através do arquivo de dados local (`usuarios.json`).
-  - Opção de acesso rápido como visitante ("Entrar sem Login").
-  - Funcionalidade de encerramento de sessão (Logoff).
+- **Autenticação:**
+  - Login contra a API com token JWT (senhas armazenadas com bcrypt).
+  - Token guardado com `flutter_secure_storage` e injetado automaticamente em todas as requisições.
+  - Sessão restaurada ao reabrir o app; retorno automático ao login quando o token expira.
 - **Dashboard de Progresso:**
-  - Resumo de métricas semanais (Tempo total de treino e total de séries executadas).
-  - Listagem do histórico das últimas atividades realizadas.
+  - Resumo dos últimos 7 dias (tempo total de treino e total de séries executadas).
+  - Listagem das últimas atividades realizadas.
 - **Gestão de Treinos:**
-  - Listagem das sessões de treino cadastradas.
-  - Formulário para inserção de novas sessões e adição dinâmica de exercícios (séries, repetições e cargas em kg).
+  - Histórico paginado com scroll infinito (lazy loading) e pull-to-refresh.
+  - Formulário para inserção de novas sessões (tipo, duração) e adição dinâmica de exercícios (séries, repetições e cargas em kg).
   - Visualização detalhada de cada treino registrado.
-- **Navegação Intuitiva:**
-  - Navegação entre telas via `BottomNavigationBar` mantendo estado e fluidez.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Linguagem:** [Dart](https://dart.dev/)
-- **Framework:** [Flutter](https://flutter.dev/)
-- **Arquitetura:** Estrutura inspirada em MVC (`models`, `views`, `services`)
-- **Persistência Temporária:** Leitura de arquivos estáticos em formato JSON (`assets/data/`)
+- **App:** [Flutter](https://flutter.dev/) / Dart, `dio`, `flutter_secure_storage`
+- **API:** [FastAPI](https://fastapi.tiangolo.com/), SQLAlchemy 2, Alembic, PyJWT, bcrypt
+- **Banco de dados:** PostgreSQL 16
+- **Infraestrutura:** Docker Compose
 
 ---
 
@@ -34,16 +32,27 @@ O **Focus** é um aplicativo mobile desenvolvido em Flutter para acompanhamento 
 
 ```text
 focus/
-├── assets/
-│   └── data/
-│       ├── treinos.json         # Dados estáticos dos treinos e histórico
-│       └── usuarios.json        # Credenciais do login mockado
+├── docker-compose.yml           # API + PostgreSQL
+├── .env.example                 # Variáveis de ambiente (copiar para .env)
+├── backend/
+│   ├── Dockerfile
+│   ├── alembic/                 # Migrações do banco
+│   ├── app/
+│   │   ├── api/                 # Rotas (auth, dashboard, workouts) e dependências
+│   │   ├── core/                # Configuração e segurança (JWT, bcrypt)
+│   │   ├── db/                  # Sessão do SQLAlchemy
+│   │   ├── models/              # Tabelas: users, workouts, exercises
+│   │   ├── schemas/             # Contratos de entrada/saída (Pydantic)
+│   │   ├── cli.py               # Comandos administrativos (criar usuário)
+│   │   └── main.py
+│   └── tests/
 ├── lib/
-│   ├── models/                  # Classes de modelo (Treino, Exercicio)
-│   ├── services/                # Serviços de leitura dos arquivos JSON
-│   ├── views/                   # Telas da aplicação (Login, Dashboard, Treinos, Form, Detalhes)
-│   └── main.dart                # Ponto de entrada do aplicativo
-└── pubspec.yaml                 # Configuração de dependências e assets
+│   ├── config/                  # URL base da API
+│   ├── models/                  # Treino, Exercicio, Pagina, DashboardResumo
+│   ├── service/                 # ApiService (Dio + interceptor JWT) e TokenStorage
+│   ├── views/                   # Telas (Login, Dashboard, Treinos, Form, Detalhes)
+│   └── main.dart
+└── pubspec.yaml
 ```
 
 ---
@@ -51,39 +60,53 @@ focus/
 ## Como Executar o Projeto
 
 ### Pré-requisitos
+- [Docker](https://docs.docker.com/get-docker/) com Docker Compose.
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) instalado e configurado.
-- Dispositivo físico configurado ou Emulador/Nativo (Linux/Android) pronto para execução.
 
-### Passo a passo
+### 1. Back-end
 
-1. **Clone este repositório:**
-   ```bash
-   git clone https://github.com/DiegoQueiroz01/Focus.git
-   cd focus
-   ```
+```bash
+cp .env.example .env
+# Preencha POSTGRES_PASSWORD e JWT_SECRET_KEY no .env
+docker compose up -d --build
+docker compose exec api python -m app.cli create-user <seu-usuario>
+```
 
-2. **Instale as dependências:**
-   ```bash
-   flutter pub get
-   ```
+As migrações rodam automaticamente na subida do container. A documentação interativa fica em http://localhost:8000/docs.
 
-3. **Execute o aplicativo:**
-   ```bash
-   flutter run
-   ```
-
----
-
-## Credenciais de Acesso (Mock)
-
-Para testar o fluxo de login autenticado, utilize uma das credenciais abaixo cadastradas no arquivo `assets/data/usuarios.json`:
-
-| Nome | Senha | Perfil |
+| Método | Rota | Descrição |
 | :--- | :--- | :--- |
-| `User` | `admin` | Administrador |
+| `POST` | `/login` | Retorna o token JWT |
+| `GET` | `/dashboard/summary?days=7` | Totais de treinos, séries e minutos do usuário |
+| `GET` | `/workouts?offset=0&limit=20` | Histórico paginado |
+| `POST` | `/workouts` | Registra uma nova sessão de treino |
+
+Testes da API:
+
+```bash
+docker run --rm -v "$PWD/backend:/src" -w /src python:3.12-slim \
+  sh -c "pip install -q -r requirements-dev.txt && pytest -q"
+```
+
+### 2. App Flutter
+
+```bash
+flutter pub get
+flutter run
+```
+
+Por padrão o app usa `http://10.0.2.2:8000` no emulador Android e `http://localhost:8000` nas demais plataformas. Para outro endereço (dispositivo físico ou produção):
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://api.seudominio.com
+```
+
+Para Flutter Web, libere a origem do app no `.env`: `CORS_ORIGINS` para endereços fixos ou, em desenvolvimento (porta aleatória), `CORS_ORIGIN_REGEX=^http://(localhost|127\.0\.0\.1):\d+$`.
 
 ---
 
-## Nota sobre Segurança e Persistência
+## Nota sobre Segurança
 
-**Aviso Acadêmico:** A validação de usuários e a listagem de treinos utilizam arquivos JSON estáticos locais localizados na pasta `assets/data/`. O objetivo desta abordagem é simular a integração com APIs de backend para fins de avaliação prática de interface, navegação e manipulação de estado no Flutter.
+- O `.env` não é versionado; segredos ficam apenas nele.
+- O PostgreSQL só é exposto em `127.0.0.1`.
+- HTTP sem TLS é permitido apenas no build de debug do Android. Em produção, publique a API atrás de HTTPS.

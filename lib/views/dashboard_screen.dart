@@ -1,7 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:focus/views/treinos_screen.dart';
+import 'package:focus/models/dashboard_resumo.dart';
+import 'package:focus/models/treino_model.dart';
+import 'package:focus/service/api_service.dart';
+import 'package:focus/utils/formatadores.dart';
 import 'package:focus/views/login_screen.dart';
-import 'package:focus/service/json_service.dart';
+import 'package:focus/views/treinos_detalhes_screen.dart';
+import 'package:focus/views/treinos_screen.dart';
+import 'package:focus/widgets/estado_vazio.dart';
+import 'package:focus/widgets/treino_tile.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,29 +26,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const TreinoScreen(),
   ];
 
-  void _aoTocarNaBarra(int index) {
-    setState(() {
-      _indiceAtual = index;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _telas[_indiceAtual],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _indiceAtual,
-        onTap: _aoTocarNaBarra,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            label: 'Treinos',
-          ),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        ),
+        child: NavigationBar(
+          selectedIndex: _indiceAtual,
+          onDestinationSelected: (index) => setState(() => _indiceAtual = index),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.space_dashboard_outlined),
+              selectedIcon: Icon(Icons.space_dashboard_rounded),
+              label: 'Início',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.format_list_bulleted_rounded),
+              selectedIcon: Icon(Icons.format_list_bulleted_rounded),
+              label: 'Treinos',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -54,9 +63,13 @@ class PainelResumo extends StatefulWidget {
 }
 
 class _PainelResumoState extends State<PainelResumo> {
-  List<dynamic> _historico = [];
-  int _tempoTotalMinutos = 0;
-  int _seriesTotais = 0;
+  static const _diasDoResumo = 7;
+  static const _quantidadeRecentes = 5;
+
+  final _api = ApiService.instance;
+  DashboardResumo? _resumo;
+  List<Treino> _recentes = [];
+  String? _erro;
   bool _carregando = true;
 
   @override
@@ -65,150 +78,216 @@ class _PainelResumoState extends State<PainelResumo> {
     _carregarDados();
   }
 
-  void _carregarDados() async {
-    final jsonService = JsonService();
-    final dados = await jsonService.lerTreinos();
-    
-    int tempo = 0;
-    int series = 0;
-
-    for (var item in dados) {
-      if (item is Map) {
-        tempo += (item['tempoTotalMinutos'] as num? ?? 0).toInt();
-        series += (item['seriesTotais'] as num? ?? 0).toInt();
-      }
-    }
-
+  Future<void> _carregarDados() async {
     setState(() {
-      _historico = dados;
-      _tempoTotalMinutos = tempo;
-      _seriesTotais = series;
-      _carregando = false;
+      _carregando = _resumo == null;
+      _erro = null;
     });
+    try {
+      final (resumo, pagina) = await (
+        _api.getResumo(dias: _diasDoResumo),
+        _api.getTreinos(limit: _quantidadeRecentes),
+      ).wait;
+      if (!mounted) return;
+      setState(() {
+        _resumo = resumo;
+        _recentes = pagina.itens;
+      });
+    } on ParallelWaitError<dynamic, (AsyncError?, AsyncError?)> catch (e) {
+      final erro = e.errors.$1?.error ?? e.errors.$2?.error;
+      if (mounted) setState(() => _erro = erro.toString());
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
   }
 
-  void _fazerLogoff() {
+  Future<void> _fazerLogoff() async {
+    await _api.logout();
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
-  String _formatarTempo(int minutos) {
-    int horas = minutos ~/ 60;
-    int mins = minutos % 60;
-    if (horas > 0) {
-      return '${horas}h ${mins}m';
-    }
-    return '${mins}m';
+  String get _saudacao {
+    final hora = DateTime.now().hour;
+    if (hora < 12) return 'Bom dia';
+    if (hora < 18) return 'Boa tarde';
+    return 'Boa noite';
   }
 
   @override
   Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final secundario = tema.colorScheme.onSurfaceVariant;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meu Progresso'),
+        toolbarHeight: 72,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(_saudacao, style: tema.textTheme.bodyMedium?.copyWith(color: secundario)),
+            Text('Seu progresso', style: tema.textTheme.headlineSmall),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             onPressed: _fazerLogoff,
             tooltip: 'Sair',
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Resumo da semana',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+          : _erro != null
+              ? EstadoVazio(
+                  icone: Icons.cloud_off_rounded,
+                  titulo: 'Não foi possível carregar',
+                  mensagem: _erro,
+                  rotuloAcao: 'Tentar novamente',
+                  onAcao: _carregarDados,
+                )
+              : RefreshIndicator(
+                  onRefresh: _carregarDados,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                     children: [
-                      Expanded(
-                        child: Card(
-                          elevation: 4,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                const Icon(Icons.timer, size: 40, color: Colors.blue),
-                                const SizedBox(height: 8),
-                                const Text('Tempo Total: ', style: TextStyle(color: Colors.grey)),
-                                Text(
-                                  _formatarTempo(_tempoTotalMinutos),
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
+                      _TituloSecao(titulo: 'Últimos 7 dias'),
+                      const SizedBox(height: 12),
+                      _PainelMetricas(resumo: _resumo!),
+                      const SizedBox(height: 32),
+                      _TituloSecao(titulo: 'Atividades recentes'),
+                      const SizedBox(height: 12),
+                      if (_recentes.isEmpty)
+                        const EstadoVazio(
+                          icone: Icons.fitness_center_rounded,
+                          titulo: 'Nenhum treino ainda',
+                          mensagem: 'Registre sua primeira sessão na aba Treinos.',
+                        ),
+                      for (final treino in _recentes) ...[
+                        TreinoTile(
+                          treino: treino,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => TreinoDetalhesScreen(treino: treino)),
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ],
+                  ),
+                ),
+    );
+  }
+}
+
+class _TituloSecao extends StatelessWidget {
+  final String titulo;
+
+  const _TituloSecao({required this.titulo});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Text(
+      titulo.toUpperCase(),
+      style: tema.textTheme.labelMedium?.copyWith(
+        color: tema.colorScheme.onSurfaceVariant,
+        letterSpacing: 1.1,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+}
+
+class _PainelMetricas extends StatelessWidget {
+  final DashboardResumo resumo;
+
+  const _PainelMetricas({required this.resumo});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+
+    return Column(
+      children: [
+        Card(
+          color: esquema.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tempo de treino',
+                        style: tema.textTheme.bodyMedium?.copyWith(
+                          color: esquema.onPrimary.withValues(alpha: 0.8),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Card(
-                          elevation: 4,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                const Icon(Icons.fitness_center, size: 40, color: Colors.orange),
-                                const SizedBox(height: 8),
-                                const Text('Séries Totais: ', style: TextStyle(color: Colors.grey)),
-                                Text(
-                                  '$_seriesTotais',
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      const SizedBox(height: 6),
+                      Text(
+                        formatarDuracao(resumo.tempoTotalMinutos),
+                        style: tema.textTheme.headlineMedium?.copyWith(color: esquema.onPrimary),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Últimas Atividades',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  ..._historico.map((item) {
-                    IconData icone = Icons.fitness_center;
-                    Color cor = Colors.blue;
-
-                    String tipo = (item['tipo'] ?? '').toString();
-                    String nomeSessao = (item['nomeSessao'] ?? '').toString();
-
-                    if (tipo == 'Cardio') {
-                      if (nomeSessao.toLowerCase().contains('bicicleta')) {
-                        icone = Icons.directions_bike;
-                        cor = Colors.green;
-                      } else {
-                        icone = Icons.directions_run;
-                        cor = Colors.orange;
-                      }
-                    }
-
-                    String detalhe = (item['data'] ?? '').toString();
-                    String tempoStr = item['tempoTotalMinutos'] != null ? '${item['tempoTotalMinutos']}m' : '';
-
-                    return Card(
-                      child: ListTile(
-                        leading: Icon(icone, color: cor),
-                        title: Text(nomeSessao),
-                        subtitle: Text(detalhe),
-                        trailing: Text(tempoStr),
-                      ),
-                    );
-                  }),
-                ],
-              ),
+                ),
+                Icon(Icons.timer_outlined, size: 36, color: esquema.onPrimary.withValues(alpha: 0.6)),
+              ],
             ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _Metrica(icone: Icons.calendar_today_rounded, rotulo: 'Treinos', valor: '${resumo.totalTreinos}'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _Metrica(icone: Icons.repeat_rounded, rotulo: 'Séries', valor: '${resumo.seriesTotais}'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Metrica extends StatelessWidget {
+  final IconData icone;
+  final String rotulo;
+  final String valor;
+
+  const _Metrica({required this.icone, required this.rotulo, required this.valor});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final secundario = tema.colorScheme.onSurfaceVariant;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icone, size: 20, color: secundario),
+            const SizedBox(height: 14),
+            Text(valor, style: tema.textTheme.headlineSmall),
+            Text(rotulo, style: tema.textTheme.bodySmall?.copyWith(color: secundario)),
+          ],
+        ),
+      ),
     );
   }
 }
