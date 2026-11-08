@@ -17,11 +17,16 @@ class MuscleGroup(str, Enum):
     biceps = "biceps"
     triceps = "triceps"
     forearms = "forearms"
+    traps = "traps"
+    lower_back = "lower_back"
     abs = "abs"
     quadriceps = "quadriceps"
     hamstrings = "hamstrings"
     glutes = "glutes"
+    adductors = "adductors"
+    abductors = "abductors"
     calves = "calves"
+    neck = "neck"
     full_body = "full_body"
     cardio = "cardio"
     other = "other"
@@ -30,6 +35,8 @@ class MuscleGroup(str, Enum):
 class ExerciseWrite(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     muscle_group: MuscleGroup = MuscleGroup.other
+    # Exercício do catálogo de origem (para mostrar foto e músculos). Nulo se criado à mão.
+    catalog_id: str | None = Field(default=None, max_length=100)
     sets: int = Field(ge=0, le=100)
     reps: int = Field(default=0, ge=0, le=1000)
     weight_kg: float = Field(default=0, ge=0, le=9999.99)
@@ -41,6 +48,7 @@ class ExerciseRead(BaseModel):
     id: int
     name: str
     muscle_group: MuscleGroup
+    catalog_id: str | None
     sets: int
     reps: int
     weight_kg: float

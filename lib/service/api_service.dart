@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:focus/config/api_config.dart';
+import 'package:focus/models/catalogo_exercicio.dart';
 import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/pagina.dart';
 import 'package:focus/models/sessao_treino.dart';
@@ -33,7 +34,12 @@ class ApiService {
     _dio.interceptors.add(_AuthInterceptor(_tokens, _notificarSessaoEncerrada));
   }
 
-  static final ApiService instance = ApiService();
+  static ApiService _instance = ApiService();
+  static ApiService get instance => _instance;
+
+  /// Troca a instância global (usado nos testes para simular a API).
+  @visibleForTesting
+  static set instance(ApiService service) => _instance = service;
 
   final Dio _dio;
   final TokenStorage _tokens;
@@ -186,6 +192,41 @@ class ApiService {
   Future<List<SessaoTreino>> getSessoesDoDia(DateTime dia) {
     final inicio = DateTime(dia.year, dia.month, dia.day);
     return getSessoes(inicio: inicio, fim: DateTime(dia.year, dia.month, dia.day + 1));
+  }
+
+  // --- Catálogo de exercícios
+
+  Future<Pagina<CatalogoExercicio>> getCatalogo({
+    String? busca,
+    TipoTreino? tipo,
+    GrupoMuscular? grupo,
+    int offset = 0,
+    int limite = 30,
+  }) async {
+    final termo = busca?.trim();
+    final data = await _request<Map<String, dynamic>>(() => _dio.get(
+          '/catalog/exercises',
+          queryParameters: {
+            if (termo != null && termo.isNotEmpty) 'q': termo,
+            'type': ?tipo?.valorApi,
+            'muscle_group': ?grupo?.valorApi,
+            'offset': offset,
+            'limit': limite,
+          },
+        ));
+    return Pagina.fromJson(data, CatalogoExercicio.fromJson);
+  }
+
+  final Map<String, Future<CatalogoExercicio>> _detalhesCatalogo = {};
+
+  /// Detalhe de um exercício do catálogo. Fica em cache, pois o catálogo não muda.
+  Future<CatalogoExercicio> getExercicioCatalogo(String id) {
+    return _detalhesCatalogo[id] ??= _request<Map<String, dynamic>>(
+      () => _dio.get('/catalog/exercises/${Uri.encodeComponent(id)}'),
+    ).then(CatalogoExercicio.fromJson).catchError((Object erro) {
+      _detalhesCatalogo.remove(id);
+      throw erro;
+    });
   }
 
   // --- Infra

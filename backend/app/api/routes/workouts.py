@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import CurrentUser, DbSession
+from app.catalog import catalog_by_id
 from app.core.config import get_settings
 from app.core.time import utcnow
 from app.models import Exercise, User, Workout, WorkoutSession
@@ -27,11 +28,19 @@ def _get_owned_workout(db: DbSession, user: User, workout_id: int) -> Workout:
 
 
 def _build_exercises(exercises: list[ExerciseWrite]) -> list[Exercise]:
+    catalog = catalog_by_id()
+    unknown = sorted({e.catalog_id for e in exercises if e.catalog_id and e.catalog_id not in catalog})
+    if unknown:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Exercício de catálogo inexistente: {', '.join(unknown)}",
+        )
     return [
         Exercise(
             position=position,
             name=exercise.name,
             muscle_group=exercise.muscle_group.value,
+            catalog_id=exercise.catalog_id,
             sets=exercise.sets,
             reps=exercise.reps,
             weight_kg=exercise.weight_kg,

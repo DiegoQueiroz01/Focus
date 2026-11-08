@@ -19,6 +19,12 @@ O **Focus** é um aplicativo mobile desenvolvido em Flutter para acompanhamento 
   - Criar, listar, editar e excluir treinos, com exercícios (grupo muscular, séries, repetições e carga).
   - Botão "Iniciar treino": cronômetro, carga acumulada (repetições × carga de cada série concluída) e
     grupo muscular do último exercício. O progresso fica salvo no aparelho se o app for fechado.
+- **Catálogo de exercícios:**
+  - 910 exercícios prontos (musculação, cardio e outras atividades), com nome em português e foto de referência.
+  - Busca por nome, abas Musculação / Cardio / Outros e filtro por grupo muscular na musculação.
+  - Detalhe com fotos (posição inicial e final), desenho do corpo destacando os músculos principais e
+    secundários, e o passo a passo (em inglês, da base original).
+  - Também dá para criar um exercício personalizado.
 - **Geral:** menu lateral (☰) para trocar de tela, tema claro/escuro e sessão restaurada ao reabrir o app.
 
 ---
@@ -96,6 +102,8 @@ As migrações rodam automaticamente na subida do container. A documentação in
 | `GET` | `/sessions/active` | Sessão em andamento (ou `null`) |
 | `POST` | `/sessions/{id}/finish` | Finaliza com carga total, séries e último grupo muscular |
 | `DELETE` | `/sessions/{id}` | Descarta uma sessão |
+| `GET` | `/catalog/exercises?q=&type=&muscle_group=` | Catálogo de exercícios (busca e filtros) |
+| `GET` | `/catalog/exercises/{id}` | Detalhe do exercício: fotos, músculos e instruções |
 
 Testes da API:
 
@@ -127,3 +135,14 @@ Para Flutter Web, libere a origem do app no `.env`: `CORS_ORIGINS` para endereç
 - `EMAIL_CHECK_DELIVERABILITY=false` desliga a checagem de DNS do e-mail (útil sem internet).
 - O PostgreSQL só é exposto em `127.0.0.1`.
 - HTTP sem TLS é permitido apenas no build de debug do Android. Em produção, publique a API atrás de HTTPS.
+
+---
+
+## Créditos do catálogo
+
+- Exercícios, fotos e instruções: [free-exercise-db](https://github.com/yuhonas/free-exercise-db)
+  (domínio público, The Unlicense). A versão fica fixada em um commit; as fotos são servidas pelo jsDelivr
+  (`CATALOG_IMAGE_BASE_URL` permite apontar para outro endereço).
+- Desenho do corpo: [muscle_selector](https://github.com/EmilCes/muscle_selector) (MIT), ver `assets/corpo/LICENSE`.
+- Nomes em português e as atividades extras (natação, esportes, lutas, yoga...) ficam em `backend/scripts/catalogo/`.
+  Para regenerar o catálogo: `python backend/scripts/catalogo/gerar_catalogo.py`.

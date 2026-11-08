@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   dio: ^5.11.1
   flutter_secure_storage: ^11.2.0
+  path_drawing: 1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +59,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    # Desenho do corpo usado para destacar os músculos (licença em assets/corpo/LICENSE).
+    - assets/corpo/mapa_muscular.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

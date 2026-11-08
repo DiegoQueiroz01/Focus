@@ -20,6 +20,9 @@ class Exercicio {
   final int? id;
   final String nome;
   final GrupoMuscular grupoMuscular;
+
+  /// Exercício do catálogo de origem (foto e músculos). Nulo se criado à mão.
+  final String? catalogoId;
   final int series;
   final double cargaKg;
   final int repeticoes;
@@ -28,6 +31,7 @@ class Exercicio {
     this.id,
     required this.nome,
     this.grupoMuscular = GrupoMuscular.outro,
+    this.catalogoId,
     required this.series,
     this.cargaKg = 0,
     this.repeticoes = 0,
@@ -38,6 +42,7 @@ class Exercicio {
       id: (json['id'] as num?)?.toInt(),
       nome: (json['name'] ?? '').toString(),
       grupoMuscular: GrupoMuscular.fromApi(json['muscle_group'] as String?),
+      catalogoId: json['catalog_id'] as String?,
       series: (json['sets'] as num? ?? 0).toInt(),
       cargaKg: (json['weight_kg'] as num? ?? 0).toDouble(),
       repeticoes: (json['reps'] as num? ?? 0).toInt(),
@@ -47,6 +52,7 @@ class Exercicio {
   Map<String, dynamic> toJson() => {
         'name': nome,
         'muscle_group': grupoMuscular.valorApi,
+        'catalog_id': catalogoId,
         'sets': series,
         'reps': repeticoes,
         'weight_kg': cargaKg,

@@ -8,6 +8,7 @@ import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/service/progresso_sessao_storage.dart';
 import 'package:focus/utils/formatadores.dart';
+import 'package:focus/widgets/imagem_exercicio.dart';
 
 /// Abre a tela de uma sessão em andamento. Se o plano não for informado, busca na API
 /// (ele pode ter sido excluído; nesse caso a sessão segue só com o cronômetro).
@@ -476,6 +477,10 @@ class _CartaoExercicio extends StatelessWidget {
           children: [
             Row(
               children: [
+                if (exercicio.catalogoId != null) ...[
+                  MiniaturaExercicio(catalogoId: exercicio.catalogoId, tamanho: 44, semCatalogo: const SizedBox()),
+                  const SizedBox(width: 12),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

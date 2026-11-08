@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
+import 'package:focus/views/catalogo_exercicios_screen.dart';
+import 'package:focus/widgets/imagem_exercicio.dart';
 
 /// Cria um treino novo ou, se [treino] for informado, edita um existente.
 /// Retorna o treino salvo.
@@ -30,11 +32,33 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
     super.dispose();
   }
 
-  Future<void> _abrirFormularioExercicio({int? indice}) async {
+  /// Escolhe um exercício do catálogo (ou cria um personalizado) e define séries e carga.
+  Future<void> _adicionarExercicio() async {
+    final escolha = await Navigator.push<EscolhaCatalogo>(
+      context,
+      MaterialPageRoute(builder: (_) => CatalogoExerciciosScreen(tipoInicial: _tipo)),
+    );
+    if (escolha == null || !mounted) return;
+    final rascunho = switch (escolha) {
+      ExercicioEscolhido(:final exercicio) => Exercicio(
+          nome: exercicio.nome,
+          grupoMuscular: exercicio.grupoMuscular,
+          catalogoId: exercicio.id,
+          series: 0,
+        ),
+      ExercicioPersonalizado(:final nome) => Exercicio(nome: nome, series: 0),
+    };
+    await _abrirFormularioExercicio(rascunho: rascunho);
+  }
+
+  Future<void> _abrirFormularioExercicio({int? indice, Exercicio? rascunho}) async {
     final exercicio = await showModalBottomSheet<Exercicio>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _FormularioExercicio(inicial: indice == null ? null : _exercicios[indice]),
+      builder: (context) => _FormularioExercicio(
+        inicial: indice == null ? rascunho : _exercicios[indice],
+        editando: indice != null,
+      ),
     );
     if (exercicio == null) return;
     setState(() {
@@ -110,7 +134,7 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
               children: [
                 const Expanded(child: _Rotulo(texto: 'Exercícios')),
                 TextButton.icon(
-                  onPressed: _abrirFormularioExercicio,
+                  onPressed: _adicionarExercicio,
                   icon: const Icon(Icons.add_rounded, size: 20),
                   label: const Text('Adicionar'),
                 ),
@@ -118,7 +142,7 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
             ),
             const SizedBox(height: 4),
             if (_exercicios.isEmpty)
-              _BotaoTracejado(onTap: _abrirFormularioExercicio)
+              _BotaoTracejado(onTap: _adicionarExercicio)
             else
               Card(
                 clipBehavior: Clip.antiAlias,
@@ -128,7 +152,12 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
                       if (indice > 0) const Divider(indent: 16, endIndent: 16),
                       ListTile(
                         onTap: () => _abrirFormularioExercicio(indice: indice),
-                        contentPadding: const EdgeInsets.only(left: 16, right: 4),
+                        contentPadding: const EdgeInsets.only(left: 12, right: 4),
+                        leading: MiniaturaExercicio(
+                          catalogoId: ex.catalogoId,
+                          abreDetalhe: false,
+                          semCatalogo: ImagemExercicio(largura: 48, altura: 48),
+                        ),
                         title: Text(ex.nome, style: tema.textTheme.titleSmall),
                         subtitle: Text(
                           '${ex.grupoMuscular.rotulo}  ·  ${ex.series} séries  ·  '
@@ -201,6 +230,11 @@ class _BotaoTracejado extends StatelessWidget {
               Icon(Icons.add_circle_outline_rounded, color: esquema.onSurfaceVariant),
               const SizedBox(height: 8),
               Text('Nenhum exercício adicionado', style: TextStyle(color: esquema.onSurfaceVariant)),
+              const SizedBox(height: 2),
+              Text(
+                'Toque para escolher no catálogo',
+                style: TextStyle(color: esquema.onSurfaceVariant, fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -211,8 +245,9 @@ class _BotaoTracejado extends StatelessWidget {
 
 class _FormularioExercicio extends StatefulWidget {
   final Exercicio? inicial;
+  final bool editando;
 
-  const _FormularioExercicio({this.inicial});
+  const _FormularioExercicio({this.inicial, this.editando = false});
 
   @override
   State<_FormularioExercicio> createState() => _FormularioExercicioState();
@@ -256,6 +291,7 @@ class _FormularioExercicioState extends State<_FormularioExercicio> {
       Exercicio(
         nome: _nomeController.text.trim(),
         grupoMuscular: _grupo ?? GrupoMuscular.outro,
+        catalogoId: widget.inicial?.catalogoId,
         series: int.tryParse(_seriesController.text) ?? 0,
         cargaKg: double.tryParse(_cargaController.text.replaceAll(',', '.')) ?? 0,
         repeticoes: int.tryParse(_repeticoesController.text) ?? 0,
@@ -275,11 +311,25 @@ class _FormularioExercicioState extends State<_FormularioExercicio> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(widget.inicial == null ? 'Novo exercício' : 'Editar exercício', style: tema.textTheme.titleLarge),
+            Row(
+              children: [
+                if (widget.inicial?.catalogoId != null) ...[
+                  MiniaturaExercicio(
+                    catalogoId: widget.inicial!.catalogoId,
+                    tamanho: 44,
+                    semCatalogo: const SizedBox.shrink(),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Text(widget.editando ? 'Editar exercício' : 'Novo exercício', style: tema.textTheme.titleLarge),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
             TextFormField(
               controller: _nomeController,
-              autofocus: widget.inicial == null,
+              autofocus: (widget.inicial?.nome ?? '').isEmpty,
               maxLength: 120,
               textCapitalization: TextCapitalization.sentences,
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Informe o nome' : null,
@@ -344,7 +394,7 @@ class _FormularioExercicioState extends State<_FormularioExercicio> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _confirmar,
-              child: Text(widget.inicial == null ? 'Adicionar exercício' : 'Salvar exercício'),
+              child: Text(widget.editando ? 'Salvar exercício' : 'Adicionar exercício'),
             ),
           ],
         ),

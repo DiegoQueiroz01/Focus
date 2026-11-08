@@ -4,6 +4,7 @@ import 'package:focus/service/api_service.dart';
 import 'package:focus/views/sessao_ativa_screen.dart';
 import 'package:focus/views/treino_form_screen.dart';
 import 'package:focus/widgets/estado_vazio.dart';
+import 'package:focus/widgets/imagem_exercicio.dart';
 import 'package:focus/widgets/treino_tile.dart';
 
 /// Detalhes de um treino, com o botão para iniciá-lo. Ao fechar, retorna true se o
@@ -190,7 +191,7 @@ class _TreinoDetalhesScreenState extends State<TreinoDetalhesScreen> {
                 child: Column(
                   children: [
                     for (final (indice, ex) in _treino.exercicios.indexed) ...[
-                      if (indice > 0) const Divider(indent: 64),
+                      if (indice > 0) const Divider(indent: 80),
                       _LinhaExercicio(numero: indice + 1, exercicio: ex),
                     ],
                   ],
@@ -257,15 +258,18 @@ class _LinhaExercicio extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: esquema.surfaceContainer,
-              borderRadius: BorderRadius.circular(10),
+          MiniaturaExercicio(
+            catalogoId: exercicio.catalogoId,
+            semCatalogo: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: esquema.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text('$numero', style: tema.textTheme.labelLarge),
             ),
-            child: Text('$numero', style: tema.textTheme.labelLarge),
           ),
           const SizedBox(width: 16),
           Expanded(

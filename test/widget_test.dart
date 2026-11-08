@@ -45,6 +45,7 @@ void main() {
       expect((payload['exercises'] as List).first, {
         'name': 'Supino',
         'muscle_group': 'chest',
+        'catalog_id': null,
         'sets': 4,
         'reps': 10,
         'weight_kg': 30.0,

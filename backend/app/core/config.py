@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     # Consulta o DNS para confirmar que o domínio do e-mail existe e recebe mensagens.
     email_check_deliverability: bool = True
 
+    # Onde ficam as fotos do catálogo de exercícios (free-exercise-db, versão fixada).
+    catalog_image_base_url: str = (
+        "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db"
+        "@f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5/exercises"
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:
