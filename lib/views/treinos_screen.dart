@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:focus/config/api_config.dart';
 import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
+import 'package:focus/views/home_shell.dart';
 import 'package:focus/views/treino_form_screen.dart';
 import 'package:focus/views/treinos_detalhes_screen.dart';
 import 'package:focus/widgets/estado_vazio.dart';
@@ -110,6 +111,15 @@ class _TreinoScreenState extends State<TreinoScreen> {
     }
   }
 
+  Future<void> _abrirDetalhes(Treino treino) async {
+    final alterado = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => TreinoDetalhesScreen(treino: treino)),
+    );
+    // Editado ou excluído: recarrega para refletir a mudança e manter o total certo.
+    if (alterado == true && mounted) await _recarregar();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
@@ -117,13 +127,14 @@ class _TreinoScreenState extends State<TreinoScreen> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 72,
+        leading: const BotaoMenu(),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Treinos', style: tema.textTheme.headlineSmall),
             if (_total != null)
               Text(
-                '$_total ${_total == 1 ? 'sessão registrada' : 'sessões registradas'}',
+                '$_total ${_total == 1 ? 'treino cadastrado' : 'treinos cadastrados'}',
                 style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant),
               ),
           ],
@@ -161,7 +172,7 @@ class _TreinoScreenState extends State<TreinoScreen> {
                   : const EstadoVazio(
                       icone: Icons.fitness_center_rounded,
                       titulo: 'Nenhum treino ainda',
-                      mensagem: 'Toque em "Novo treino" para registrar sua primeira sessão.',
+                      mensagem: 'Toque em "Novo treino" para montar sua primeira sessão.',
                     ),
             ),
           ),
@@ -180,13 +191,7 @@ class _TreinoScreenState extends State<TreinoScreen> {
         itemBuilder: (context, index) {
           if (index == _meusTreinos.length) return _rodapeDaLista();
           final treino = _meusTreinos[index];
-          return TreinoTile(
-            treino: treino,
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => TreinoDetalhesScreen(treino: treino)),
-            ),
-          );
+          return TreinoTile(treino: treino, onTap: () => _abrirDetalhes(treino));
         },
       ),
     );

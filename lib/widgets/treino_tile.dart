@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:focus/models/treino_model.dart';
-import 'package:focus/utils/formatadores.dart';
 
 class IconeTreino extends StatelessWidget {
-  final Treino treino;
+  final TipoTreino tipo;
+  final String nome;
   final double tamanho;
 
-  const IconeTreino({super.key, required this.treino, this.tamanho = 44});
+  const IconeTreino({super.key, required this.tipo, this.nome = '', this.tamanho = 44});
 
   @override
   Widget build(BuildContext context) {
-    final (icone, cor) = switch (treino.tipo) {
+    final (icone, cor) = switch (tipo) {
       TipoTreino.musculacao => (Icons.fitness_center_rounded, const Color(0xFF16A34A)),
-      TipoTreino.cardio when treino.nomeSessao.toLowerCase().contains('bicicleta') =>
+      TipoTreino.cardio when nome.toLowerCase().contains('bicicleta') =>
         (Icons.directions_bike_rounded, const Color(0xFF0EA5E9)),
       TipoTreino.cardio => (Icons.directions_run_rounded, const Color(0xFFF97316)),
       TipoTreino.outro => (Icons.bolt_rounded, const Color(0xFF8B5CF6)),
@@ -40,11 +40,12 @@ class TreinoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final secundario = tema.colorScheme.onSurfaceVariant;
+    final quantidade = treino.exercicios.length;
+    final grupos = treino.gruposMusculares.map((g) => g.rotulo);
 
     final detalhes = [
-      formatarDataRelativa(treino.data),
-      if (treino.exercicios.isNotEmpty)
-        '${treino.exercicios.length} ${treino.exercicios.length == 1 ? 'exercício' : 'exercícios'}',
+      quantidade == 0 ? 'Sem exercícios' : '$quantidade ${quantidade == 1 ? 'exercício' : 'exercícios'}',
+      if (grupos.isNotEmpty) grupos.take(3).join(', ') + (grupos.length > 3 ? '…' : ''),
     ].join('  ·  ');
 
     return Card(
@@ -55,7 +56,7 @@ class TreinoTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              IconeTreino(treino: treino),
+              IconeTreino(tipo: treino.tipo, nome: treino.nomeSessao),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -68,15 +69,17 @@ class TreinoTile extends StatelessWidget {
                       style: tema.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 2),
-                    Text(detalhes, style: tema.textTheme.bodySmall?.copyWith(color: secundario)),
+                    Text(
+                      detalhes,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: tema.textTheme.bodySmall?.copyWith(color: secundario),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                formatarDuracao(treino.tempoTotalMinutos),
-                style: tema.textTheme.labelLarge?.copyWith(color: secundario),
-              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: secundario),
             ],
           ),
         ),

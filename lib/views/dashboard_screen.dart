@@ -1,74 +1,35 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:focus/models/dashboard_resumo.dart';
-import 'package:focus/models/treino_model.dart';
+import 'package:focus/models/sessao_treino.dart';
+import 'package:focus/models/usuario.dart';
+import 'package:focus/models/visao_geral.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/utils/formatadores.dart';
-import 'package:focus/views/login_screen.dart';
-import 'package:focus/views/treinos_detalhes_screen.dart';
-import 'package:focus/views/treinos_screen.dart';
+import 'package:focus/views/home_shell.dart';
+import 'package:focus/views/sessao_ativa_screen.dart';
+import 'package:focus/widgets/atividades_do_dia.dart';
 import 'package:focus/widgets/estado_vazio.dart';
-import 'package:focus/widgets/treino_tile.dart';
+import 'package:focus/widgets/mapa_atividades.dart';
+import 'package:focus/widgets/sessao_tile.dart';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  int _indiceAtual = 0;
-
-  final List<Widget> _telas = [
-    const PainelResumo(),
-    const TreinoScreen(),
-  ];
+/// Tela inicial: treino em andamento, sequência, totais da semana, histórico e mapa de atividades.
+class PainelInicio extends StatefulWidget {
+  const PainelInicio({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _telas[_indiceAtual],
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-        ),
-        child: NavigationBar(
-          selectedIndex: _indiceAtual,
-          onDestinationSelected: (index) => setState(() => _indiceAtual = index),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.space_dashboard_outlined),
-              selectedIcon: Icon(Icons.space_dashboard_rounded),
-              label: 'Início',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.format_list_bulleted_rounded),
-              selectedIcon: Icon(Icons.format_list_bulleted_rounded),
-              label: 'Treinos',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  State<PainelInicio> createState() => _PainelInicioState();
 }
 
-class PainelResumo extends StatefulWidget {
-  const PainelResumo({super.key});
-
-  @override
-  State<PainelResumo> createState() => _PainelResumoState();
-}
-
-class _PainelResumoState extends State<PainelResumo> {
-  static const _diasDoResumo = 7;
+class _PainelInicioState extends State<PainelInicio> {
   static const _quantidadeRecentes = 5;
 
   final _api = ApiService.instance;
-  DashboardResumo? _resumo;
-  List<Treino> _recentes = [];
+  Usuario? _usuario;
+  VisaoGeral? _visao;
+  List<SessaoTreino> _recentes = [];
+  SessaoTreino? _sessaoAtiva;
+  DateTime? _diaSelecionado;
   String? _erro;
   bool _carregando = true;
 
@@ -80,41 +41,46 @@ class _PainelResumoState extends State<PainelResumo> {
 
   Future<void> _carregarDados() async {
     setState(() {
-      _carregando = _resumo == null;
+      _carregando = _visao == null;
       _erro = null;
     });
     try {
-      final (resumo, pagina) = await (
-        _api.getResumo(dias: _diasDoResumo),
-        _api.getTreinos(limit: _quantidadeRecentes),
-      ).wait;
+      final resultados = await Future.wait<Object?>([
+        _api.getUsuario(),
+        _api.getVisaoGeral(),
+        _api.getSessoes(limite: _quantidadeRecentes),
+        _api.getSessaoAtiva(),
+      ]);
       if (!mounted) return;
       setState(() {
-        _resumo = resumo;
-        _recentes = pagina.itens;
+        _usuario = resultados[0] as Usuario;
+        _visao = resultados[1] as VisaoGeral;
+        _recentes = resultados[2] as List<SessaoTreino>;
+        _sessaoAtiva = resultados[3] as SessaoTreino?;
       });
-    } on ParallelWaitError<dynamic, (AsyncError?, AsyncError?)> catch (e) {
-      final erro = e.errors.$1?.error ?? e.errors.$2?.error;
-      if (mounted) setState(() => _erro = erro.toString());
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _erro = e.mensagem);
     } finally {
       if (mounted) setState(() => _carregando = false);
     }
   }
 
-  Future<void> _fazerLogoff() async {
-    await _api.logout();
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    );
+  Future<void> _abrirSessao(SessaoTreino sessao) async {
+    await abrirSessaoAtiva(context, sessao);
+    if (mounted) await _carregarDados();
+  }
+
+  Future<void> _abrirDia(DateTime dia) async {
+    setState(() => _diaSelecionado = dia);
+    await mostrarAtividadesDoDia(context, dia);
+    if (mounted) setState(() => _diaSelecionado = null);
   }
 
   String get _saudacao {
     final hora = DateTime.now().hour;
-    if (hora < 12) return 'Bom dia';
-    if (hora < 18) return 'Boa tarde';
-    return 'Boa noite';
+    final periodo = hora < 12 ? 'Bom dia' : (hora < 18 ? 'Boa tarde' : 'Boa noite');
+    final nome = _usuario?.primeiroNome ?? '';
+    return nome.isEmpty ? periodo : '$periodo, $nome';
   }
 
   @override
@@ -125,6 +91,7 @@ class _PainelResumoState extends State<PainelResumo> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 72,
+        leading: const BotaoMenu(),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -132,14 +99,6 @@ class _PainelResumoState extends State<PainelResumo> {
             Text('Seu progresso', style: tema.textTheme.headlineSmall),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            onPressed: _fazerLogoff,
-            tooltip: 'Sair',
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: _carregando
           ? const Center(child: CircularProgressIndicator())
@@ -151,63 +110,229 @@ class _PainelResumoState extends State<PainelResumo> {
                   rotuloAcao: 'Tentar novamente',
                   onAcao: _carregarDados,
                 )
-              : RefreshIndicator(
-                  onRefresh: _carregarDados,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                    children: [
-                      _TituloSecao(titulo: 'Últimos 7 dias'),
-                      const SizedBox(height: 12),
-                      _PainelMetricas(resumo: _resumo!),
-                      const SizedBox(height: 32),
-                      _TituloSecao(titulo: 'Atividades recentes'),
-                      const SizedBox(height: 12),
-                      if (_recentes.isEmpty)
-                        const EstadoVazio(
-                          icone: Icons.fitness_center_rounded,
-                          titulo: 'Nenhum treino ainda',
-                          mensagem: 'Registre sua primeira sessão na aba Treinos.',
-                        ),
-                      for (final treino in _recentes) ...[
-                        TreinoTile(
-                          treino: treino,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => TreinoDetalhesScreen(treino: treino)),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
-                ),
+              : RefreshIndicator(onRefresh: _carregarDados, child: _conteudo(_visao!)),
+    );
+  }
+
+  Widget _conteudo(VisaoGeral visao) {
+    final semana = visao.semana;
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      children: [
+        if (_sessaoAtiva != null) ...[
+          _BannerSessaoAtiva(sessao: _sessaoAtiva!, onTap: () => _abrirSessao(_sessaoAtiva!)),
+          const SizedBox(height: 16),
+        ],
+        _CartaoSequencia(sequencia: visao.sequencia),
+        const SizedBox(height: 32),
+        _TituloSecao(titulo: 'Esta semana', detalhe: formatarIntervalo(semana.inicio, semana.fim)),
+        const SizedBox(height: 12),
+        _PainelSemana(semana: semana, onTapDia: _abrirDia),
+        const SizedBox(height: 32),
+        const _TituloSecao(titulo: 'Atividades recentes'),
+        const SizedBox(height: 12),
+        if (_recentes.isEmpty)
+          const EstadoVazio(
+            icone: Icons.fitness_center_rounded,
+            titulo: 'Nenhum treino ainda',
+            mensagem: 'Abra o menu ☰, vá em Treinos e toque em "Iniciar" em uma sessão.',
+          ),
+        for (final sessao in _recentes) ...[
+          SessaoTile(
+            sessao: sessao,
+            onTap: () => sessao.emAndamento ? _abrirSessao(sessao) : _abrirDia(sessao.iniciadaEm),
+          ),
+          const SizedBox(height: 10),
+        ],
+        const SizedBox(height: 22),
+        const _TituloSecao(titulo: 'Dias com atividade'),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+            child: MapaAtividades(mapa: visao.mapa, diaSelecionado: _diaSelecionado, onTapDia: _abrirDia),
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _TituloSecao extends StatelessWidget {
   final String titulo;
+  final String? detalhe;
 
-  const _TituloSecao({required this.titulo});
+  const _TituloSecao({required this.titulo, this.detalhe});
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    return Text(
-      titulo.toUpperCase(),
-      style: tema.textTheme.labelMedium?.copyWith(
-        color: tema.colorScheme.onSurfaceVariant,
-        letterSpacing: 1.1,
-        fontWeight: FontWeight.w600,
+    final estilo = tema.textTheme.labelMedium?.copyWith(
+      color: tema.colorScheme.onSurfaceVariant,
+      letterSpacing: 1.1,
+      fontWeight: FontWeight.w600,
+    );
+    return Row(
+      children: [
+        Expanded(child: Text(titulo.toUpperCase(), style: estilo)),
+        if (detalhe != null) Text(detalhe!, style: estilo?.copyWith(letterSpacing: 0, fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+}
+
+class _BannerSessaoAtiva extends StatefulWidget {
+  final SessaoTreino sessao;
+  final VoidCallback onTap;
+
+  const _BannerSessaoAtiva({required this.sessao, required this.onTap});
+
+  @override
+  State<_BannerSessaoAtiva> createState() => _BannerSessaoAtivaState();
+}
+
+class _BannerSessaoAtivaState extends State<_BannerSessaoAtiva> {
+  late final Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    final decorrido = DateTime.now().difference(widget.sessao.iniciadaEm);
+
+    return Card(
+      color: esquema.primary.withValues(alpha: 0.12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: esquema.primary.withValues(alpha: 0.4)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: esquema.primary, borderRadius: BorderRadius.circular(14)),
+                child: Icon(Icons.play_arrow_rounded, color: esquema.onPrimary),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Treino em andamento', style: tema.textTheme.labelMedium?.copyWith(color: esquema.primary)),
+                    Text(
+                      widget.sessao.nomeTreino,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: tema.textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                formatarCronometro(decorrido),
+                style: tema.textTheme.titleMedium?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: esquema.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _PainelMetricas extends StatelessWidget {
-  final DashboardResumo resumo;
+class _CartaoSequencia extends StatelessWidget {
+  final Sequencia sequencia;
 
-  const _PainelMetricas({required this.resumo});
+  const _CartaoSequencia({required this.sequencia});
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    final ativa = sequencia.atual > 0;
+    const laranja = Color(0xFFF97316);
+
+    final mensagem = switch (sequencia) {
+      Sequencia(atual: 0) => 'Inicie um treino hoje para começar uma sequência.',
+      Sequencia(treinouHoje: false) => 'Inicie um treino hoje para não perder a sequência.',
+      _ => 'Você já treinou hoje. Continue amanhã!',
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: ativa ? laranja.withValues(alpha: 0.14) : esquema.surfaceContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                Icons.local_fire_department_rounded,
+                size: 30,
+                color: ativa ? laranja : esquema.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${sequencia.atual} ${sequencia.atual == 1 ? 'dia seguido' : 'dias seguidos'}',
+                    style: tema.textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(mensagem, style: tema.textTheme.bodySmall?.copyWith(color: esquema.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            if (sequencia.recorde > 0) ...[
+              const SizedBox(width: 12),
+              Column(
+                children: [
+                  Text('${sequencia.recorde}', style: tema.textTheme.titleMedium),
+                  Text('recorde', style: tema.textTheme.labelSmall?.copyWith(color: esquema.onSurfaceVariant)),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PainelSemana extends StatelessWidget {
+  final ResumoSemana semana;
+  final ValueChanged<DateTime> onTapDia;
+
+  const _PainelSemana({required this.semana, required this.onTapDia});
 
   @override
   Widget build(BuildContext context) {
@@ -229,13 +354,11 @@ class _PainelMetricas extends StatelessWidget {
                     children: [
                       Text(
                         'Tempo de treino',
-                        style: tema.textTheme.bodyMedium?.copyWith(
-                          color: esquema.onPrimary.withValues(alpha: 0.8),
-                        ),
+                        style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onPrimary.withValues(alpha: 0.8)),
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        formatarDuracao(resumo.tempoTotalMinutos),
+                        formatarDuracaoSegundos(semana.totalSegundos),
                         style: tema.textTheme.headlineMedium?.copyWith(color: esquema.onPrimary),
                       ),
                     ],
@@ -250,14 +373,20 @@ class _PainelMetricas extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _Metrica(icone: Icons.calendar_today_rounded, rotulo: 'Treinos', valor: '${resumo.totalTreinos}'),
+              child: _Metrica(icone: Icons.calendar_today_rounded, rotulo: 'Treinos', valor: '${semana.totalSessoes}'),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _Metrica(icone: Icons.repeat_rounded, rotulo: 'Séries', valor: '${resumo.seriesTotais}'),
+              child: _Metrica(icone: Icons.scale_outlined, rotulo: 'Carga total', valor: formatarVolume(semana.totalVolumeKg)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _Metrica(icone: Icons.repeat_rounded, rotulo: 'Séries', valor: '${semana.totalSeries}'),
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        _GraficoSemana(dias: semana.dias, onTapDia: onTapDia),
       ],
     );
   }
@@ -277,14 +406,94 @@ class _Metrica extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icone, size: 20, color: secundario),
-            const SizedBox(height: 14),
-            Text(valor, style: tema.textTheme.headlineSmall),
+            const SizedBox(height: 12),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(valor, style: tema.textTheme.titleLarge),
+            ),
             Text(rotulo, style: tema.textTheme.bodySmall?.copyWith(color: secundario)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Barras de segunda a domingo com o tempo treinado em cada dia.
+class _GraficoSemana extends StatelessWidget {
+  final List<TotaisDoDia> dias;
+  final ValueChanged<DateTime> onTapDia;
+
+  const _GraficoSemana({required this.dias, required this.onTapDia});
+
+  static const _letras = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
+  static const _alturaMaxima = 72.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final esquema = tema.colorScheme;
+    final hoje = inicioDoDia(DateTime.now());
+
+    // Usa o tempo como medida; se nenhuma sessão foi finalizada, usa a quantidade.
+    final usarTempo = dias.any((d) => d.duracaoSegundos > 0);
+    double medida(TotaisDoDia d) => usarTempo ? d.duracaoSegundos.toDouble() : d.sessoes.toDouble();
+    final maximo = dias.map(medida).fold(0.0, (a, b) => a > b ? a : b);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (final (i, dia) in dias.indexed)
+              Expanded(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => onTapDia(dia.data),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 16,
+                          child: dia.sessoes > 0
+                              ? Text(
+                                  usarTempo ? '${(dia.duracaoSegundos / 60).round()}m' : '${dia.sessoes}',
+                                  style: tema.textTheme.labelSmall?.copyWith(color: esquema.onSurfaceVariant),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          width: 18,
+                          height: maximo == 0 || medida(dia) == 0
+                              ? 4
+                              : 8 + (_alturaMaxima - 8) * (medida(dia) / maximo),
+                          decoration: BoxDecoration(
+                            color: dia.sessoes > 0 ? esquema.primary : esquema.surfaceContainer,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _letras[i],
+                          style: tema.textTheme.labelMedium?.copyWith(
+                            color: dia.data == hoje ? esquema.onSurface : esquema.onSurfaceVariant,
+                            fontWeight: dia.data == hoje ? FontWeight.w800 : FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:focus/config/api_config.dart';
-import 'package:focus/models/dashboard_resumo.dart';
+import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/pagina.dart';
+import 'package:focus/models/sessao_treino.dart';
 import 'package:focus/models/treino_model.dart';
+import 'package:focus/models/usuario.dart';
+import 'package:focus/models/visao_geral.dart';
 import 'package:focus/service/token_storage.dart';
 
 class ApiException implements Exception {
@@ -34,6 +37,7 @@ class ApiService {
 
   final Dio _dio;
   final TokenStorage _tokens;
+  Usuario? _usuario;
 
   /// Chamado quando a API rejeita o token (expirado/revogado). O app usa para voltar ao login.
   VoidCallback? onUnauthorized;
@@ -44,33 +48,67 @@ class ApiService {
   void _notificarSessaoEncerrada() {
     if (_sessaoEncerrada) return;
     _sessaoEncerrada = true;
+    _usuario = null;
     onUnauthorized?.call();
   }
 
+  static final _semAuth = Options(extra: {_AuthInterceptor.skipAuthKey: true});
+
+  // --- Conta
+
   Future<bool> isAuthenticated() async => await _tokens.read() != null;
 
-  Future<void> login(String username, String password) async {
+  Future<void> login(String email, String senha) async {
     final data = await _request<Map<String, dynamic>>(() => _dio.post(
           '/login',
-          data: {'username': username, 'password': password},
-          options: Options(extra: {_AuthInterceptor.skipAuthKey: true}),
+          data: {'email': email, 'password': senha},
+          options: _semAuth,
         ));
+    await _salvarToken(data);
+  }
+
+  Future<void> cadastrar({required String nome, required String email, required String senha}) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.post(
+          '/register',
+          data: {'name': nome, 'email': email, 'password': senha},
+          options: _semAuth,
+        ));
+    await _salvarToken(data);
+  }
+
+  Future<void> _salvarToken(Map<String, dynamic> data) async {
     await _tokens.save(
       data['access_token'] as String,
       Duration(seconds: (data['expires_in'] as num).toInt()),
     );
+    _usuario = null;
     _sessaoEncerrada = false;
   }
 
-  Future<void> logout() => _tokens.clear();
-
-  Future<DashboardResumo> getResumo({int? dias}) async {
-    final data = await _request<Map<String, dynamic>>(() => _dio.get(
-          '/dashboard/summary',
-          queryParameters: {'days': ?dias},
-        ));
-    return DashboardResumo.fromJson(data);
+  Future<void> logout() async {
+    _usuario = null;
+    await _tokens.clear();
   }
+
+  /// Dados do usuário logado. Fica em cache até o próximo login/logout.
+  Future<Usuario> getUsuario() async {
+    final emCache = _usuario;
+    if (emCache != null) return emCache;
+    final data = await _request<Map<String, dynamic>>(() => _dio.get('/me'));
+    return _usuario = Usuario.fromJson(data);
+  }
+
+  // --- Painel
+
+  Future<VisaoGeral> getVisaoGeral() async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.get(
+          '/dashboard/overview',
+          queryParameters: {'tz_offset_minutes': DateTime.now().timeZoneOffset.inMinutes},
+        ));
+    return VisaoGeral.fromJson(data);
+  }
+
+  // --- Treinos
 
   Future<Pagina<Treino>> getTreinos({int offset = 0, int limit = ApiConfig.pageSize}) async {
     final data = await _request<Map<String, dynamic>>(() => _dio.get(
@@ -80,12 +118,77 @@ class ApiService {
     return Pagina.fromJson(data, Treino.fromJson);
   }
 
+  Future<Treino> getTreino(int id) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.get('/workouts/$id'));
+    return Treino.fromJson(data);
+  }
+
   Future<Treino> criarTreino(Treino treino) async {
     final data = await _request<Map<String, dynamic>>(
       () => _dio.post('/workouts', data: treino.toJson()),
     );
     return Treino.fromJson(data);
   }
+
+  Future<Treino> atualizarTreino(int id, Treino treino) async {
+    final data = await _request<Map<String, dynamic>>(
+      () => _dio.put('/workouts/$id', data: treino.toJson()),
+    );
+    return Treino.fromJson(data);
+  }
+
+  Future<void> excluirTreino(int id) => _request<dynamic>(() => _dio.delete('/workouts/$id'));
+
+  // --- Sessões
+
+  Future<SessaoTreino> iniciarSessao(int treinoId) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.post('/workouts/$treinoId/sessions'));
+    return SessaoTreino.fromJson(data);
+  }
+
+  Future<SessaoTreino?> getSessaoAtiva() async {
+    final data = await _request<Map<String, dynamic>?>(() => _dio.get('/sessions/active'));
+    return data == null ? null : SessaoTreino.fromJson(data);
+  }
+
+  Future<SessaoTreino> finalizarSessao(
+    int sessaoId, {
+    required double volumeKg,
+    required int series,
+    GrupoMuscular? ultimoGrupo,
+  }) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.post(
+          '/sessions/$sessaoId/finish',
+          data: {
+            'total_volume_kg': double.parse(volumeKg.toStringAsFixed(2)),
+            'total_sets': series,
+            'last_muscle_group': ultimoGrupo?.valorApi,
+          },
+        ));
+    return SessaoTreino.fromJson(data);
+  }
+
+  Future<void> descartarSessao(int sessaoId) => _request<dynamic>(() => _dio.delete('/sessions/$sessaoId'));
+
+  /// Sessões iniciadas no intervalo [inicio, fim), da mais recente para a mais antiga.
+  Future<List<SessaoTreino>> getSessoes({DateTime? inicio, DateTime? fim, int limite = 50}) async {
+    final data = await _request<List<dynamic>>(() => _dio.get(
+          '/sessions',
+          queryParameters: {
+            'start': ?inicio?.toUtc().toIso8601String(),
+            'end': ?fim?.toUtc().toIso8601String(),
+            'limit': limite,
+          },
+        ));
+    return data.map((s) => SessaoTreino.fromJson(s as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<SessaoTreino>> getSessoesDoDia(DateTime dia) {
+    final inicio = DateTime(dia.year, dia.month, dia.day);
+    return getSessoes(inicio: inicio, fim: DateTime(dia.year, dia.month, dia.day + 1));
+  }
+
+  // --- Infra
 
   Future<T> _request<T>(Future<Response<dynamic>> Function() call) async {
     try {

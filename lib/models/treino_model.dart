@@ -1,3 +1,4 @@
+import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/utils/formatadores.dart';
 
 enum TipoTreino {
@@ -18,6 +19,7 @@ enum TipoTreino {
 class Exercicio {
   final int? id;
   final String nome;
+  final GrupoMuscular grupoMuscular;
   final int series;
   final double cargaKg;
   final int repeticoes;
@@ -25,6 +27,7 @@ class Exercicio {
   const Exercicio({
     this.id,
     required this.nome,
+    this.grupoMuscular = GrupoMuscular.outro,
     required this.series,
     this.cargaKg = 0,
     this.repeticoes = 0,
@@ -34,6 +37,7 @@ class Exercicio {
     return Exercicio(
       id: (json['id'] as num?)?.toInt(),
       nome: (json['name'] ?? '').toString(),
+      grupoMuscular: GrupoMuscular.fromApi(json['muscle_group'] as String?),
       series: (json['sets'] as num? ?? 0).toInt(),
       cargaKg: (json['weight_kg'] as num? ?? 0).toDouble(),
       repeticoes: (json['reps'] as num? ?? 0).toInt(),
@@ -42,6 +46,7 @@ class Exercicio {
 
   Map<String, dynamic> toJson() => {
         'name': nome,
+        'muscle_group': grupoMuscular.valorApi,
         'sets': series,
         'reps': repeticoes,
         'weight_kg': cargaKg,
@@ -50,12 +55,12 @@ class Exercicio {
   String get cargaFormatada => formatarCarga(cargaKg);
 }
 
+/// Plano de treino. Cada vez que o usuário toca em "Iniciar", vira uma [SessaoTreino].
 class Treino {
   final int? id;
   final String nomeSessao;
   final TipoTreino tipo;
-  final DateTime data;
-  final int tempoTotalMinutos;
+  final DateTime? criadoEm;
   final int seriesTotais;
   final List<Exercicio> exercicios;
 
@@ -63,24 +68,22 @@ class Treino {
     this.id,
     required this.nomeSessao,
     this.tipo = TipoTreino.musculacao,
-    DateTime? data,
-    this.tempoTotalMinutos = 0,
+    this.criadoEm,
     int? seriesTotais,
     required this.exercicios,
-  })  : data = data ?? DateTime.now(),
-        seriesTotais = seriesTotais ?? exercicios.fold(0, (soma, e) => soma + e.series);
+  }) : seriesTotais = seriesTotais ?? exercicios.fold(0, (soma, e) => soma + e.series);
 
   factory Treino.fromJson(Map<String, dynamic> json) {
     final exercicios = (json['exercises'] as List? ?? [])
         .map((e) => Exercicio.fromJson(e as Map<String, dynamic>))
         .toList();
+    final criadoEm = json['created_at'] as String?;
 
     return Treino(
       id: (json['id'] as num?)?.toInt(),
       nomeSessao: (json['name'] ?? 'Treino Sem Nome').toString(),
       tipo: TipoTreino.fromApi(json['type'] as String?),
-      data: DateTime.parse(json['performed_at'] as String).toLocal(),
-      tempoTotalMinutos: (json['duration_minutes'] as num? ?? 0).toInt(),
+      criadoEm: criadoEm == null ? null : DateTime.parse(criadoEm).toLocal(),
       seriesTotais: (json['total_sets'] as num?)?.toInt(),
       exercicios: exercicios,
     );
@@ -89,14 +92,15 @@ class Treino {
   Map<String, dynamic> toJson() => {
         'name': nomeSessao,
         'type': tipo.valorApi,
-        'performed_at': data.toUtc().toIso8601String(),
-        'duration_minutes': tempoTotalMinutos,
         'exercises': exercicios.map((e) => e.toJson()).toList(),
       };
 
-  String get dataFormatada {
-    String doisDigitos(int n) => n.toString().padLeft(2, '0');
-    return '${doisDigitos(data.day)}/${doisDigitos(data.month)}/${data.year} '
-        '${doisDigitos(data.hour)}:${doisDigitos(data.minute)}';
+  /// Grupos musculares trabalhados, na ordem em que aparecem, sem repetição.
+  List<GrupoMuscular> get gruposMusculares {
+    final grupos = <GrupoMuscular>{};
+    for (final e in exercicios) {
+      if (e.grupoMuscular != GrupoMuscular.outro) grupos.add(e.grupoMuscular);
+    }
+    return grupos.toList();
   }
 }

@@ -1,7 +1,6 @@
-from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -12,18 +11,14 @@ if TYPE_CHECKING:
 
 
 class Workout(TimestampMixin, Base):
+    """Plano de treino (ex.: "Treino A — Peito"). Cada execução vira uma WorkoutSession."""
+
     __tablename__ = "workouts"
-    __table_args__ = (
-        CheckConstraint("duration_minutes >= 0", name="duration_non_negative"),
-        Index("ix_workouts_user_id_performed_at", "user_id", "performed_at"),
-    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     name: Mapped[str] = mapped_column(String(120))
     type: Mapped[str] = mapped_column(String(30))
-    performed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    duration_minutes: Mapped[int] = mapped_column(Integer, default=0)
 
     user: Mapped["User"] = relationship(back_populates="workouts")
     exercises: Mapped[list["Exercise"]] = relationship(

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:focus/service/api_service.dart';
+import 'package:focus/service/tema_controller.dart';
 import 'package:focus/theme/app_theme.dart';
-import 'package:focus/views/dashboard_screen.dart';
+import 'package:focus/views/home_shell.dart';
 import 'package:focus/views/login_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await TemaController.instance.carregar();
 
   ApiService.instance.onUnauthorized = () {
     navigatorKey.currentState?.pushAndRemoveUntil(
@@ -24,14 +26,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Focus',
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.claro,
-      darkTheme: AppTheme.escuro,
-      themeMode: ThemeMode.system,
-      home: const AuthGate(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: TemaController.instance,
+      builder: (context, modo, _) => MaterialApp(
+        title: 'Focus',
+        navigatorKey: navigatorKey,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.claro,
+        darkTheme: AppTheme.escuro,
+        themeMode: modo,
+        home: const AuthGate(),
+      ),
     );
   }
 }
@@ -48,7 +53,7 @@ class AuthGate extends StatelessWidget {
         if (!snapshot.hasData) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-        return snapshot.data! ? const DashboardScreen() : const LoginScreen();
+        return snapshot.data! ? const HomeShell() : const LoginScreen();
       },
     );
   }

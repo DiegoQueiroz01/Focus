@@ -5,17 +5,21 @@ O **Focus** é um aplicativo mobile desenvolvido em Flutter para acompanhamento 
 ---
 ## 📱 Funcionalidades
 
-- **Autenticação:**
-  - Login contra a API com token JWT (senhas armazenadas com bcrypt).
+- **Conta:**
+  - Cadastro no próprio app com nome, e-mail e senha. A API confere se o domínio do e-mail existe (DNS).
+  - Login por e-mail com token JWT (senhas armazenadas com bcrypt).
   - Token guardado com `flutter_secure_storage` e injetado automaticamente em todas as requisições.
   - Sessão restaurada ao reabrir o app; retorno automático ao login quando o token expira.
-- **Dashboard de Progresso:**
-  - Resumo dos últimos 7 dias (tempo total de treino e total de séries executadas).
-  - Listagem das últimas atividades realizadas.
-- **Gestão de Treinos:**
-  - Histórico paginado com scroll infinito (lazy loading) e pull-to-refresh.
-  - Formulário para inserção de novas sessões (tipo, duração) e adição dinâmica de exercícios (séries, repetições e cargas em kg).
-  - Visualização detalhada de cada treino registrado.
+- **Painel:**
+  - Totais da semana atual (segunda a domingo): tempo, treinos, carga total e séries, com gráfico por dia.
+  - Sequência de dias seguidos com treino iniciado, e recorde.
+  - Mapa de dias com atividade do último ano (estilo GitHub); tocar em um dia mostra as atividades dele.
+    1 atividade = azul fraco, 2 = azul médio, 3 = azul intenso, 4 ou mais = roxo azulado.
+- **Treinos:**
+  - Criar, listar, editar e excluir treinos, com exercícios (grupo muscular, séries, repetições e carga).
+  - Botão "Iniciar treino": cronômetro, carga acumulada (repetições × carga de cada série concluída) e
+    grupo muscular do último exercício. O progresso fica salvo no aparelho se o app for fechado.
+- **Geral:** menu lateral (☰) para trocar de tela, tema claro/escuro e sessão restaurada ao reabrir o app.
 
 ---
 
@@ -69,17 +73,29 @@ focus/
 cp .env.example .env
 # Preencha POSTGRES_PASSWORD e JWT_SECRET_KEY no .env
 docker compose up -d --build
-docker compose exec api python -m app.cli create-user <seu-usuario>
 ```
+
+As contas são criadas pela tela de cadastro do app. Para criar uma manualmente:
+`docker compose exec api python -m app.cli create-user <email> --name "Seu Nome"`.
 
 As migrações rodam automaticamente na subida do container. A documentação interativa fica em http://localhost:8000/docs.
 
 | Método | Rota | Descrição |
 | :--- | :--- | :--- |
 | `POST` | `/login` | Retorna o token JWT |
-| `GET` | `/dashboard/summary?days=7` | Totais de treinos, séries e minutos do usuário |
-| `GET` | `/workouts?offset=0&limit=20` | Histórico paginado |
-| `POST` | `/workouts` | Registra uma nova sessão de treino |
+| `POST` | `/register` | Cria a conta (nome, e-mail, senha) e retorna o token |
+| `GET` | `/me` | Dados do usuário logado |
+| `GET` | `/dashboard/overview?tz_offset_minutes=-180` | Semana atual, sequência e mapa de atividades |
+| `GET` | `/workouts?offset=0&limit=20` | Lista paginada de treinos |
+| `GET` | `/workouts/{id}` | Detalhes de um treino |
+| `POST` | `/workouts` | Cria um treino |
+| `PUT` | `/workouts/{id}` | Edita um treino (substitui os exercícios) |
+| `DELETE` | `/workouts/{id}` | Exclui um treino (o histórico de sessões continua) |
+| `POST` | `/workouts/{id}/sessions` | Inicia uma sessão de treino |
+| `GET` | `/sessions?start=&end=&limit=` | Sessões iniciadas no intervalo |
+| `GET` | `/sessions/active` | Sessão em andamento (ou `null`) |
+| `POST` | `/sessions/{id}/finish` | Finaliza com carga total, séries e último grupo muscular |
+| `DELETE` | `/sessions/{id}` | Descarta uma sessão |
 
 Testes da API:
 
@@ -108,5 +124,6 @@ Para Flutter Web, libere a origem do app no `.env`: `CORS_ORIGINS` para endereç
 ## Nota sobre Segurança
 
 - O `.env` não é versionado; segredos ficam apenas nele.
+- `EMAIL_CHECK_DELIVERABILITY=false` desliga a checagem de DNS do e-mail (útil sem internet).
 - O PostgreSQL só é exposto em `127.0.0.1`.
 - HTTP sem TLS é permitido apenas no build de debug do Android. Em produção, publique a API atrás de HTTPS.

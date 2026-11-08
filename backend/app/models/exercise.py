@@ -24,6 +24,7 @@ class Exercise(Base):
     )
     position: Mapped[int] = mapped_column(Integer)
     name: Mapped[str] = mapped_column(String(120))
+    muscle_group: Mapped[str] = mapped_column(String(30), default="other", server_default="other")
     sets: Mapped[int] = mapped_column(Integer)
     reps: Mapped[int] = mapped_column(Integer, default=0)
     weight_kg: Mapped[Decimal] = mapped_column(Numeric(6, 2), default=Decimal("0"))

@@ -1,8 +1,44 @@
+from datetime import date
+
 from pydantic import BaseModel
 
 
-class DashboardSummary(BaseModel):
-    total_workouts: int
+class DayTotals(BaseModel):
+    date: date
+    sessions: int
+    duration_seconds: int
+    volume_kg: float
+    sets: int
+
+
+class WeekSummary(BaseModel):
+    start: date
+    end: date
+    total_sessions: int
+    total_duration_seconds: int
+    total_volume_kg: float
     total_sets: int
-    total_minutes: int
-    period_days: int | None
+    days: list[DayTotals]
+
+
+class Streak(BaseModel):
+    current: int
+    best: int
+    trained_today: bool
+
+
+class HeatmapDay(BaseModel):
+    date: date
+    count: int
+
+
+class Heatmap(BaseModel):
+    start: date
+    end: date
+    days: list[HeatmapDay]
+
+
+class DashboardOverview(BaseModel):
+    week: WeekSummary
+    streak: Streak
+    heatmap: Heatmap

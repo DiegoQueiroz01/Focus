@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:focus/service/api_service.dart';
-import 'package:focus/views/dashboard_screen.dart';
+import 'package:focus/utils/validadores.dart';
+import 'package:focus/views/cadastro_screen.dart';
+import 'package:focus/views/home_shell.dart';
+import 'package:focus/widgets/campo_senha.dart';
 
 class LoginScreen extends StatefulWidget {
   final bool sessaoExpirada;
@@ -13,10 +16,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _senhaController = TextEditingController();
   bool _enviando = false;
-  bool _senhaVisivel = false;
 
   @override
   void initState() {
@@ -30,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _senhaController.dispose();
     super.dispose();
   }
@@ -40,11 +42,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _enviando = true);
     try {
-      await ApiService.instance.login(_usernameController.text.trim(), _senhaController.text);
+      await ApiService.instance.login(_emailController.text.trim(), _senhaController.text);
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        MaterialPageRoute(builder: (context) => const HomeShell()),
       );
     } on ApiException catch (e) {
       _mostrarErro(e.mensagem);
@@ -60,8 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  String? _obrigatorio(String? valor) =>
-      (valor == null || valor.trim().isEmpty) ? 'Campo obrigatório' : null;
+  void _abrirCadastro() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CadastroScreen()));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,34 +105,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 36),
                       TextFormField(
-                        controller: _usernameController,
-                        autofillHints: const [AutofillHints.username],
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
                         textInputAction: TextInputAction.next,
-                        validator: _obrigatorio,
+                        validator: validarObrigatorio,
                         decoration: const InputDecoration(
-                          labelText: 'Usuário',
-                          prefixIcon: Icon(Icons.person_outline_rounded),
+                          labelText: 'E-mail',
+                          prefixIcon: Icon(Icons.alternate_email_rounded),
                         ),
                       ),
                       const SizedBox(height: 14),
-                      TextFormField(
+                      CampoSenha(
                         controller: _senhaController,
-                        obscureText: !_senhaVisivel,
                         autofillHints: const [AutofillHints.password],
                         textInputAction: TextInputAction.done,
                         onFieldSubmitted: (_) => _fazerLogin(),
-                        validator: _obrigatorio,
-                        decoration: InputDecoration(
-                          labelText: 'Senha',
-                          prefixIcon: const Icon(Icons.lock_outline_rounded),
-                          suffixIcon: IconButton(
-                            tooltip: _senhaVisivel ? 'Ocultar senha' : 'Mostrar senha',
-                            icon: Icon(_senhaVisivel
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined),
-                            onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
-                          ),
-                        ),
+                        validator: validarObrigatorio,
                       ),
                       const SizedBox(height: 28),
                       FilledButton(
@@ -144,6 +136,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               )
                             : const Text('Entrar'),
+                      ),
+                      const SizedBox(height: 16),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text('Ainda não tem conta?', style: TextStyle(color: esquema.onSurfaceVariant)),
+                          TextButton(
+                            onPressed: _enviando ? null : _abrirCadastro,
+                            child: const Text('Criar conta'),
+                          ),
+                        ],
                       ),
                     ],
                   ),

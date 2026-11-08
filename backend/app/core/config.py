@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     cors_origin_regex: str | None = None
     workouts_page_max: int = 50
 
+    # Consulta o DNS para confirmar que o domínio do e-mail existe e recebe mensagens.
+    email_check_deliverability: bool = True
+
 
 @lru_cache
 def get_settings() -> Settings:

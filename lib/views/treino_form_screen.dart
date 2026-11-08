@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
 
+/// Cria um treino novo ou, se [treino] for informado, edita um existente.
+/// Retorna o treino salvo.
 class TreinoFormScreen extends StatefulWidget {
-  const TreinoFormScreen({super.key});
+  final Treino? treino;
+
+  const TreinoFormScreen({super.key, this.treino});
 
   @override
   State<TreinoFormScreen> createState() => _TreinoFormScreenState();
@@ -12,43 +17,50 @@ class TreinoFormScreen extends StatefulWidget {
 
 class _TreinoFormScreenState extends State<TreinoFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeSessaoController = TextEditingController();
-  final _duracaoController = TextEditingController();
-  final List<Exercicio> _exerciciosAdicionados = [];
-  TipoTreino _tipo = TipoTreino.musculacao;
+  late final _nomeSessaoController = TextEditingController(text: widget.treino?.nomeSessao);
+  late final List<Exercicio> _exercicios = List.of(widget.treino?.exercicios ?? const []);
+  late TipoTreino _tipo = widget.treino?.tipo ?? TipoTreino.musculacao;
   bool _salvando = false;
+
+  bool get _editando => widget.treino?.id != null;
 
   @override
   void dispose() {
     _nomeSessaoController.dispose();
-    _duracaoController.dispose();
     super.dispose();
   }
 
-  Future<void> _abrirFormularioExercicio() async {
+  Future<void> _abrirFormularioExercicio({int? indice}) async {
     final exercicio = await showModalBottomSheet<Exercicio>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => const _FormularioExercicio(),
+      builder: (context) => _FormularioExercicio(inicial: indice == null ? null : _exercicios[indice]),
     );
-    if (exercicio != null) {
-      setState(() => _exerciciosAdicionados.add(exercicio));
-    }
+    if (exercicio == null) return;
+    setState(() {
+      if (indice == null) {
+        _exercicios.add(exercicio);
+      } else {
+        _exercicios[indice] = exercicio;
+      }
+    });
   }
 
   Future<void> _salvarTreino() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _salvando = true);
+    final treino = Treino(
+      nomeSessao: _nomeSessaoController.text.trim(),
+      tipo: _tipo,
+      exercicios: List.of(_exercicios),
+    );
     try {
-      final criado = await ApiService.instance.criarTreino(Treino(
-        nomeSessao: _nomeSessaoController.text.trim(),
-        tipo: _tipo,
-        tempoTotalMinutos: int.tryParse(_duracaoController.text) ?? 0,
-        exercicios: List.of(_exerciciosAdicionados),
-      ));
+      final salvo = _editando
+          ? await ApiService.instance.atualizarTreino(widget.treino!.id!, treino)
+          : await ApiService.instance.criarTreino(treino);
       if (!mounted) return;
-      Navigator.pop(context, criado);
+      Navigator.pop(context, salvo);
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +77,7 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
     final secundario = tema.colorScheme.onSurfaceVariant;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Novo treino')),
+      appBar: AppBar(title: Text(_editando ? 'Editar treino' : 'Novo treino')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -83,38 +95,20 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            _Rotulo(texto: 'Tipo'),
+            const _Rotulo(texto: 'Tipo'),
             const SizedBox(height: 8),
             SegmentedButton<TipoTreino>(
               showSelectedIcon: false,
               segments: [
-                for (final tipo in TipoTreino.values)
-                  ButtonSegment(value: tipo, label: Text(tipo.rotulo)),
+                for (final tipo in TipoTreino.values) ButtonSegment(value: tipo, label: Text(tipo.rotulo)),
               ],
               selected: {_tipo},
               onSelectionChanged: (selecao) => setState(() => _tipo = selecao.first),
             ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _duracaoController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (v) {
-                final minutos = int.tryParse(v ?? '');
-                if (minutos == null || minutos <= 0) return 'Informe a duração';
-                if (minutos > 1440) return 'Máximo de 1440 minutos';
-                return null;
-              },
-              decoration: const InputDecoration(
-                labelText: 'Duração',
-                suffixText: 'min',
-                prefixIcon: Icon(Icons.timer_outlined),
-              ),
-            ),
             const SizedBox(height: 28),
             Row(
               children: [
-                Expanded(child: _Rotulo(texto: 'Exercícios')),
+                const Expanded(child: _Rotulo(texto: 'Exercícios')),
                 TextButton.icon(
                   onPressed: _abrirFormularioExercicio,
                   icon: const Icon(Icons.add_rounded, size: 20),
@@ -123,25 +117,28 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
               ],
             ),
             const SizedBox(height: 4),
-            if (_exerciciosAdicionados.isEmpty)
+            if (_exercicios.isEmpty)
               _BotaoTracejado(onTap: _abrirFormularioExercicio)
             else
               Card(
+                clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
-                    for (final (indice, ex) in _exerciciosAdicionados.indexed) ...[
+                    for (final (indice, ex) in _exercicios.indexed) ...[
                       if (indice > 0) const Divider(indent: 16, endIndent: 16),
                       ListTile(
+                        onTap: () => _abrirFormularioExercicio(indice: indice),
                         contentPadding: const EdgeInsets.only(left: 16, right: 4),
                         title: Text(ex.nome, style: tema.textTheme.titleSmall),
                         subtitle: Text(
-                          '${ex.series} séries  ·  ${ex.repeticoes} reps  ·  ${ex.cargaFormatada}',
+                          '${ex.grupoMuscular.rotulo}  ·  ${ex.series} séries  ·  '
+                          '${ex.repeticoes} reps  ·  ${ex.cargaFormatada}',
                           style: tema.textTheme.bodySmall?.copyWith(color: secundario),
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.close_rounded, size: 20),
                           tooltip: 'Remover',
-                          onPressed: () => setState(() => _exerciciosAdicionados.removeAt(indice)),
+                          onPressed: () => setState(() => _exercicios.removeAt(indice)),
                         ),
                       ),
                     ],
@@ -157,7 +154,7 @@ class _TreinoFormScreenState extends State<TreinoFormScreen> {
           onPressed: _salvando ? null : _salvarTreino,
           child: _salvando
               ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Salvar treino'),
+              : Text(_editando ? 'Salvar alterações' : 'Salvar treino'),
         ),
       ),
     );
@@ -203,10 +200,7 @@ class _BotaoTracejado extends StatelessWidget {
             children: [
               Icon(Icons.add_circle_outline_rounded, color: esquema.onSurfaceVariant),
               const SizedBox(height: 8),
-              Text(
-                'Nenhum exercício adicionado',
-                style: TextStyle(color: esquema.onSurfaceVariant),
-              ),
+              Text('Nenhum exercício adicionado', style: TextStyle(color: esquema.onSurfaceVariant)),
             ],
           ),
         ),
@@ -216,7 +210,9 @@ class _BotaoTracejado extends StatelessWidget {
 }
 
 class _FormularioExercicio extends StatefulWidget {
-  const _FormularioExercicio();
+  final Exercicio? inicial;
+
+  const _FormularioExercicio({this.inicial});
 
   @override
   State<_FormularioExercicio> createState() => _FormularioExercicioState();
@@ -224,10 +220,18 @@ class _FormularioExercicio extends StatefulWidget {
 
 class _FormularioExercicioState extends State<_FormularioExercicio> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
-  final _seriesController = TextEditingController();
-  final _cargaController = TextEditingController();
-  final _repeticoesController = TextEditingController();
+  late final _nomeController = TextEditingController(text: widget.inicial?.nome);
+  late final _seriesController = TextEditingController(text: _textoInteiro(widget.inicial?.series));
+  late final _repeticoesController = TextEditingController(text: _textoInteiro(widget.inicial?.repeticoes));
+  late final _cargaController = TextEditingController(text: _textoCarga(widget.inicial?.cargaKg));
+  late GrupoMuscular? _grupo = widget.inicial?.grupoMuscular;
+
+  static String? _textoInteiro(int? valor) => (valor == null || valor == 0) ? null : '$valor';
+
+  static String? _textoCarga(double? kg) {
+    if (kg == null || kg == 0) return null;
+    return kg == kg.truncateToDouble() ? kg.toStringAsFixed(0) : kg.toString();
+  }
 
   @override
   void dispose() {
@@ -251,6 +255,7 @@ class _FormularioExercicioState extends State<_FormularioExercicio> {
       context,
       Exercicio(
         nome: _nomeController.text.trim(),
+        grupoMuscular: _grupo ?? GrupoMuscular.outro,
         series: int.tryParse(_seriesController.text) ?? 0,
         cargaKg: double.tryParse(_cargaController.text.replaceAll(',', '.')) ?? 0,
         repeticoes: int.tryParse(_repeticoesController.text) ?? 0,
@@ -270,15 +275,32 @@ class _FormularioExercicioState extends State<_FormularioExercicio> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Novo exercício', style: tema.textTheme.titleLarge),
+            Text(widget.inicial == null ? 'Novo exercício' : 'Editar exercício', style: tema.textTheme.titleLarge),
             const SizedBox(height: 20),
             TextFormField(
               controller: _nomeController,
-              autofocus: true,
+              autofocus: widget.inicial == null,
               maxLength: 120,
               textCapitalization: TextCapitalization.sentences,
               validator: (v) => (v == null || v.trim().isEmpty) ? 'Informe o nome' : null,
               decoration: const InputDecoration(labelText: 'Exercício', counterText: ''),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<GrupoMuscular>(
+              initialValue: _grupo,
+              isExpanded: true,
+              borderRadius: BorderRadius.circular(12),
+              menuMaxHeight: 360,
+              validator: (v) => v == null ? 'Escolha o grupo muscular' : null,
+              decoration: const InputDecoration(
+                labelText: 'Grupo muscular',
+                prefixIcon: Icon(Icons.accessibility_new_rounded),
+              ),
+              items: [
+                for (final grupo in GrupoMuscular.values)
+                  DropdownMenuItem(value: grupo, child: Text(grupo.rotulo)),
+              ],
+              onChanged: (grupo) => setState(() => _grupo = grupo),
             ),
             const SizedBox(height: 12),
             Row(
@@ -320,7 +342,10 @@ class _FormularioExercicioState extends State<_FormularioExercicio> {
               ],
             ),
             const SizedBox(height: 24),
-            FilledButton(onPressed: _confirmar, child: const Text('Adicionar exercício')),
+            FilledButton(
+              onPressed: _confirmar,
+              child: Text(widget.inicial == null ? 'Adicionar exercício' : 'Salvar exercício'),
+            ),
           ],
         ),
       ),
