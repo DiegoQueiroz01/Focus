@@ -3,13 +3,15 @@ import 'package:focus/models/usuario.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/service/tema_controller.dart';
 import 'package:focus/views/dashboard_screen.dart';
+import 'package:focus/views/gps_screen.dart';
 import 'package:focus/views/login_screen.dart';
 import 'package:focus/views/treinos_screen.dart';
 import 'package:focus/widgets/avatar_usuario.dart';
 
 enum Destino {
   inicio('Início', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
-  treinos('Treinos', Icons.fitness_center_outlined, Icons.fitness_center_rounded);
+  treinos('Treinos', Icons.fitness_center_outlined, Icons.fitness_center_rounded),
+  gps('GPS', Icons.route_outlined, Icons.route_rounded);
 
   final String rotulo;
   final IconData icone;
@@ -48,6 +50,7 @@ class HomeShellState extends State<HomeShell> {
       body: switch (_destino) {
         Destino.inicio => const PainelInicio(key: ValueKey(Destino.inicio)),
         Destino.treinos => const TreinoScreen(key: ValueKey(Destino.treinos)),
+        Destino.gps => const GpsScreen(key: ValueKey(Destino.gps)),
       },
     );
   }

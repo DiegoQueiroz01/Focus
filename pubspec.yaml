@@ -37,6 +37,9 @@ dependencies:
   dio: ^5.11.1
   flutter_secure_storage: ^11.2.0
   path_drawing: 1.0.1
+  geolocator: ^14.1.2
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
 
 dev_dependencies:
   flutter_test:

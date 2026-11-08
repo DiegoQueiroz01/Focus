@@ -72,7 +72,9 @@ class _AtividadesDoDiaState extends State<_AtividadesDoDia> {
                     titulo: 'Não foi possível carregar',
                     mensagem: snapshot.error.toString(),
                     rotuloAcao: 'Tentar novamente',
-                    onAcao: () => setState(() => _sessoes = ApiService.instance.getSessoesDoDia(widget.dia)),
+                    onAcao: () => setState(() {
+                      _sessoes = ApiService.instance.getSessoesDoDia(widget.dia);
+                    }),
                   )
                 else if (sessoes.isEmpty)
                   const EstadoVazio(

@@ -1,5 +1,53 @@
+# ---------- Segredos e dados ----------
+# Senhas do banco e chave do JWT (use o .env.example como modelo).
 .env
+.env.*
+!.env.example
+# Backups do banco: têm e-mails e hashes de senha dos usuários.
+backups/
+*.sql
+*.dump
+# Chaves de assinatura do app (Android/iOS).
+*.jks
+*.keystore
+key.properties
+*.p12
+*.mobileprovision
+
+# ---------- Flutter / Dart ----------
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+coverage/
+*.g.dart.incremental
+# Saída dos testes golden que falharam.
+test/**/failures/
+
+# ---------- Python / backend ----------
 __pycache__/
-*.pyc
+*.py[cod]
 .pytest_cache/
 .venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+backend/.local/
+
+# ---------- IDEs e sistema ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+*.swp

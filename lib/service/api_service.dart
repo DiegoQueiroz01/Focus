@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:focus/config/api_config.dart';
+import 'package:focus/models/atividade_gps.dart';
 import 'package:focus/models/catalogo_exercicio.dart';
 import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/pagina.dart';
@@ -233,6 +234,37 @@ class ApiService {
       throw erro;
     });
   }
+
+  // --- Atividades por GPS
+
+  Future<List<AtividadeGps>> getAtividadesGps({int offset = 0, int limite = 30}) async {
+    final data = await _request<List<dynamic>>(() => _dio.get(
+          '/gps-activities',
+          queryParameters: {'offset': offset, 'limit': limite},
+        ));
+    return [for (final item in data) AtividadeGps.fromJson(item as Map<String, dynamic>)];
+  }
+
+  Future<AtividadeGps> getAtividadeGps(int id) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.get('/gps-activities/$id'));
+    return AtividadeGps.fromJson(data);
+  }
+
+  Future<AtividadeGps> salvarAtividadeGps(AtividadeGps atividade) async {
+    final data = await _request<Map<String, dynamic>>(
+      () => _dio.post('/gps-activities', data: atividade.toJson()),
+    );
+    return AtividadeGps.fromJson(data);
+  }
+
+  Future<AtividadeGps> atualizarComentarioGps(int id, String? comentario) async {
+    final data = await _request<Map<String, dynamic>>(
+      () => _dio.put('/gps-activities/$id/comment', data: {'comment': comentario}),
+    );
+    return AtividadeGps.fromJson(data);
+  }
+
+  Future<void> excluirAtividadeGps(int id) => _request<dynamic>(() => _dio.delete('/gps-activities/$id'));
 
   // --- Infra
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, catalog, dashboard, sessions, workouts
+from app.api.routes import auth, catalog, dashboard, gps, sessions, workouts
 from app.core.config import get_settings
 
 
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
     app.include_router(workouts.router)
     app.include_router(sessions.router)
     app.include_router(catalog.router)
+    app.include_router(gps.router)
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:

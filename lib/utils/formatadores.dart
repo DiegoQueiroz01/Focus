@@ -71,3 +71,19 @@ String formatarVolume(double kg) {
 }
 
 DateTime inicioDoDia(DateTime data) => DateTime(data.year, data.month, data.day);
+
+String _decimal(double valor, int casas) => valor.toStringAsFixed(casas).replaceAll('.', ',');
+
+/// "5,23 km" (ou "850 m" abaixo de 1 km).
+String formatarDistancia(double metros) =>
+    metros < 1000 ? '${metros.round()} m' : '${_decimal(metros / 1000, 2)} km';
+
+/// Ritmo em min/km: "5:42". Sem dado, "--:--".
+String formatarRitmo(double? segundosPorKm) {
+  if (segundosPorKm == null || !segundosPorKm.isFinite || segundosPorKm > 3600) return '--:--';
+  final total = segundosPorKm.round();
+  return '${total ~/ 60}:${_doisDigitos(total % 60)}';
+}
+
+/// "23,4 km/h"
+String formatarVelocidade(double kmh) => '${_decimal(kmh, 1)} km/h';

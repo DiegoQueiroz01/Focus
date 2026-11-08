@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.gps_activity import GpsActivity
     from app.models.workout import Workout
     from app.models.workout_session import WorkoutSession
 
@@ -27,5 +28,8 @@ class User(TimestampMixin, Base):
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     sessions: Mapped[list["WorkoutSession"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
+    )
+    gps_activities: Mapped[list["GpsActivity"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )

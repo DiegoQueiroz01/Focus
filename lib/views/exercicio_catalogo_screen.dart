@@ -35,7 +35,9 @@ class _ExercicioCatalogoScreenState extends State<ExercicioCatalogoScreen> {
                 titulo: 'Não foi possível carregar',
                 mensagem: snapshot.error.toString(),
                 rotuloAcao: 'Tentar novamente',
-                onAcao: () => setState(() => _detalhe = ApiService.instance.getExercicioCatalogo(widget.id)),
+                onAcao: () => setState(() {
+                  _detalhe = ApiService.instance.getExercicioCatalogo(widget.id);
+                }),
               ),
             _ when exercicio == null => const Center(child: CircularProgressIndicator()),
             _ => _Conteudo(exercicio: exercicio),
