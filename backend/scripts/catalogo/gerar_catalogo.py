@@ -4,6 +4,7 @@ Fontes:
 - free-exercise-db (https://github.com/yuhonas/free-exercise-db), domínio público
   (The Unlicense). Fixado no commit abaixo para que as imagens não mudem.
 - nomes_pt.json: tradução dos nomes para português.
+- instrucoes_pt.json: tradução do passo a passo (frase em inglês → português).
 - extras.json: atividades de cardio e outras que não existem na base acima.
 
 Uso (na pasta backend/):
@@ -57,6 +58,7 @@ def carregar_base() -> list[dict]:
 def main() -> None:
     base = carregar_base()
     nomes_pt = json.loads((PASTA / "nomes_pt.json").read_text(encoding="utf-8"))
+    instrucoes_pt = json.loads((PASTA / "instrucoes_pt.json").read_text(encoding="utf-8"))
     extras = json.loads((PASTA / "extras.json").read_text(encoding="utf-8"))
 
     catalogo = []
@@ -75,7 +77,7 @@ def main() -> None:
                 # Poucos itens da base vêm sem foto; esses usam um ícone genérico.
                 "icon": None if item["images"] else "fitness",
                 "description": None,
-                "instructions": item["instructions"],
+                "instructions": [instrucoes_pt[passo.strip()] for passo in item["instructions"] if passo.strip()],
             }
         )
 

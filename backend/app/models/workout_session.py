@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String
+from sqlalchemy import JSON, CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -37,6 +37,8 @@ class WorkoutSession(Base):
     total_volume_kg: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"))
     total_sets: Mapped[int] = mapped_column(Integer, default=0)
     last_muscle_group: Mapped[str | None] = mapped_column(String(30))
+    # Séries por músculo ({"chest": 8, "triceps": 4}); ver app/muscle_load.py.
+    muscle_load: Mapped[dict[str, float] | None] = mapped_column(JSON)
 
     user: Mapped["User"] = relationship(back_populates="sessions")
     workout: Mapped["Workout | None"] = relationship()

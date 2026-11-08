@@ -19,6 +19,8 @@ class User(TimestampMixin, Base):
     email: Mapped[str | None] = mapped_column(String(254), unique=True, index=True)
     username: Mapped[str | None] = mapped_column(String(50), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    # Foto vinda de um login social (ex.: Google). Sem ela, usa-se o Gravatar do e-mail.
+    avatar_url: Mapped[str | None] = mapped_column(String(500))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
 
     workouts: Mapped[list["Workout"]] = relationship(

@@ -162,6 +162,7 @@ class ApiService {
     required double volumeKg,
     required int series,
     GrupoMuscular? ultimoGrupo,
+    Map<int, int> seriesPorExercicio = const {},
   }) async {
     final data = await _request<Map<String, dynamic>>(() => _dio.post(
           '/sessions/$sessaoId/finish',
@@ -169,6 +170,10 @@ class ApiService {
             'total_volume_kg': double.parse(volumeKg.toStringAsFixed(2)),
             'total_sets': series,
             'last_muscle_group': ultimoGrupo?.valorApi,
+            'completed_sets': [
+              for (final MapEntry(:key, :value) in seriesPorExercicio.entries)
+                if (value > 0) {'exercise_id': key, 'sets': value},
+            ],
           },
         ));
     return SessaoTreino.fromJson(data);

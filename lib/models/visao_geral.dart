@@ -1,3 +1,5 @@
+import 'package:focus/models/sessao_treino.dart';
+
 /// Dados do painel: totais da semana atual, sequência de dias e mapa de atividades.
 class VisaoGeral {
   final ResumoSemana semana;
@@ -56,6 +58,9 @@ class ResumoSemana {
   final int totalSeries;
   final List<TotaisDoDia> dias;
 
+  /// Séries por músculo somadas na semana.
+  final Map<String, double> cargaMuscular;
+
   const ResumoSemana({
     required this.inicio,
     required this.fim,
@@ -64,6 +69,7 @@ class ResumoSemana {
     required this.totalVolumeKg,
     required this.totalSeries,
     required this.dias,
+    this.cargaMuscular = const {},
   });
 
   factory ResumoSemana.fromJson(Map<String, dynamic> json) {
@@ -75,6 +81,7 @@ class ResumoSemana {
       totalVolumeKg: (json['total_volume_kg'] as num).toDouble(),
       totalSeries: (json['total_sets'] as num).toInt(),
       dias: (json['days'] as List).map((d) => TotaisDoDia.fromJson(d as Map<String, dynamic>)).toList(),
+      cargaMuscular: lerCargaMuscular(json['muscle_load']),
     );
   }
 }

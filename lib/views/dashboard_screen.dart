@@ -11,6 +11,7 @@ import 'package:focus/views/sessao_ativa_screen.dart';
 import 'package:focus/widgets/atividades_do_dia.dart';
 import 'package:focus/widgets/estado_vazio.dart';
 import 'package:focus/widgets/mapa_atividades.dart';
+import 'package:focus/widgets/mapa_muscular.dart';
 import 'package:focus/widgets/sessao_tile.dart';
 
 /// Tela inicial: treino em andamento, sequência, totais da semana, histórico e mapa de atividades.
@@ -129,6 +130,29 @@ class _PainelInicioState extends State<PainelInicio> {
         _TituloSecao(titulo: 'Esta semana', detalhe: formatarIntervalo(semana.inicio, semana.fim)),
         const SizedBox(height: 12),
         _PainelSemana(semana: semana, onTapDia: _abrirDia),
+        const SizedBox(height: 32),
+        const _TituloSecao(titulo: 'Músculos da semana'),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: semana.cargaMuscular.isEmpty
+                ? Column(
+                    children: [
+                      const MapaMuscular(),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Finalize um treino marcando as séries feitas para ver aqui os músculos que você mais trabalhou.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  )
+                : ResumoMuscular(cargaMuscular: semana.cargaMuscular),
+          ),
+        ),
         const SizedBox(height: 32),
         const _TituloSecao(titulo: 'Atividades recentes'),
         const SizedBox(height: 12),

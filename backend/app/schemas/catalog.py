@@ -22,7 +22,7 @@ class CatalogExerciseSummary(BaseModel):
 class CatalogExerciseDetail(CatalogExerciseSummary):
     image_urls: list[str]
     description: str | None
-    # Passo a passo; disponível em inglês na base de origem.
+    # Passo a passo, em português.
     instructions: list[str]
 
 

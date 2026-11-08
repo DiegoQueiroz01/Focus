@@ -3,13 +3,17 @@ class Usuario {
   final String nome;
   final String? email;
 
-  const Usuario({required this.id, required this.nome, this.email});
+  /// Foto de perfil (Gravatar do e-mail ou de um login social). Pode não existir.
+  final String? fotoUrl;
+
+  const Usuario({required this.id, required this.nome, this.email, this.fotoUrl});
 
   factory Usuario.fromJson(Map<String, dynamic> json) {
     return Usuario(
       id: (json['id'] as num).toInt(),
       nome: (json['name'] ?? '').toString(),
       email: json['email'] as String?,
+      fotoUrl: json['avatar_url'] as String?,
     );
   }
 

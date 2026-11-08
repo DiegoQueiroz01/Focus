@@ -3,6 +3,7 @@ import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/views/sessao_ativa_screen.dart';
 import 'package:focus/views/treino_form_screen.dart';
+import 'package:focus/widgets/dialogo_padrao.dart';
 import 'package:focus/widgets/estado_vazio.dart';
 import 'package:focus/widgets/imagem_exercicio.dart';
 import 'package:focus/widgets/treino_tile.dart';
@@ -45,18 +46,15 @@ class _TreinoDetalhesScreenState extends State<TreinoDetalhesScreen> {
   Future<void> _oferecerSessaoEmAndamento(String mensagem) async {
     final ativa = await _api.getSessaoAtiva();
     if (!mounted || ativa == null) return;
-    final continuar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Treino em andamento'),
-        content: Text('"${ativa.nomeTreino}" ainda está aberto. Finalize-o antes de iniciar outro.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Agora não')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Ir para o treino')),
-        ],
-      ),
+    final continuar = await confirmar(
+      context,
+      icone: Icons.play_circle_outline_rounded,
+      titulo: 'Treino em andamento',
+      mensagem: '"${ativa.nomeTreino}" ainda está aberto. Finalize-o antes de iniciar outro.',
+      rotuloConfirmar: 'Ir para o treino',
+      rotuloCancelar: 'Agora não',
     );
-    if (continuar == true && mounted) {
+    if (continuar && mounted) {
       await abrirSessaoAtiva(context, ativa, treino: ativa.treinoId == _treino.id ? _treino : null);
     }
   }
@@ -75,27 +73,15 @@ class _TreinoDetalhesScreenState extends State<TreinoDetalhesScreen> {
   }
 
   Future<void> _excluir() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir treino?'),
-        content: Text(
-          '"${_treino.nomeSessao}" será removido. As sessões já realizadas continuam no seu histórico.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+    final excluir = await confirmar(
+      context,
+      icone: Icons.delete_outline_rounded,
+      titulo: 'Excluir treino?',
+      mensagem: '"${_treino.nomeSessao}" será removido. As sessões já realizadas continuam no seu histórico.',
+      rotuloConfirmar: 'Excluir',
+      destrutivo: true,
     );
-    if (confirmar != true) return;
+    if (!excluir) return;
 
     setState(() => _ocupado = true);
     try {

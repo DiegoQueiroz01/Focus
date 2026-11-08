@@ -7,6 +7,7 @@ import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/theme/app_theme.dart';
 import 'package:focus/views/catalogo_exercicios_screen.dart';
+import 'package:focus/widgets/dialogo_padrao.dart';
 import 'package:focus/widgets/mapa_muscular.dart';
 
 const _supino = CatalogoExercicio(
@@ -204,5 +205,51 @@ void main() {
     await tester.tap(find.text('Criar "Exercício do meu professor"'));
     await tester.pumpAndSettle();
     expect((escolha! as ExercicioPersonalizado).nome, 'Exercício do meu professor');
+  });
+  testWidgets('Resumo muscular destaca mais os músculos com mais séries', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2000);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.escuro,
+      home: const Scaffold(
+        body: Padding(
+          padding: EdgeInsets.all(16),
+          child: ResumoMuscular(cargaMuscular: {'chest': 8, 'triceps': 4, 'shoulders': 2, 'lats': 1}),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    final rotulos = tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).toList();
+    expect(rotulos.indexOf('Peito'), lessThan(rotulos.indexOf('Tríceps')));
+    expect(find.text('8 séries'), findsOneWidget);
+    await expectLater(find.byType(ResumoMuscular), matchesGoldenFile('goldens/resumo_muscular.png'));
+  });
+
+  testWidgets('Diálogo padrão empilha os botões ocupando toda a largura', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      theme: AppTheme.claro,
+      home: Builder(
+        builder: (context) => TextButton(
+          onPressed: () => confirmar(
+            context,
+            titulo: 'Finalizar treino?',
+            mensagem: 'Texto',
+            rotuloConfirmar: 'Finalizar',
+            rotuloCancelar: 'Continuar treinando',
+          ),
+          child: const Text('abrir'),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+
+    final principal = tester.getRect(find.widgetWithText(FilledButton, 'Finalizar'));
+    final secundario = tester.getRect(find.widgetWithText(TextButton, 'Continuar treinando'));
+    expect(principal.width, secundario.width);
+    expect(principal.center.dx, secundario.center.dx);
+    expect(secundario.top, greaterThan(principal.bottom));
   });
 }

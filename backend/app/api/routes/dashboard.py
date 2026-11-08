@@ -8,6 +8,7 @@ from sqlalchemy import select
 from app.api.deps import CurrentUser, DbSession
 from app.core.time import local_date, utcnow
 from app.models import WorkoutSession
+from app.muscle_load import sum_loads
 from app.schemas.dashboard import (
     DashboardOverview,
     DayTotals,
@@ -64,6 +65,7 @@ def get_overview(
             WorkoutSession.duration_seconds,
             WorkoutSession.total_volume_kg,
             WorkoutSession.total_sets,
+            WorkoutSession.muscle_load,
         ).where(WorkoutSession.user_id == user.id)
     ).all()
 
@@ -79,8 +81,9 @@ def get_overview(
     }
     all_days: set[date] = set()
     heatmap_counts: Counter[date] = Counter()
+    week_loads: list[dict[str, float] | None] = []
 
-    for started_at, duration, volume, sets in rows:
+    for started_at, duration, volume, sets, muscle_load in rows:
         day = local_date(started_at, offset)
         all_days.add(day)
         if heatmap_start <= day <= today:
@@ -91,6 +94,7 @@ def get_overview(
             totals.duration_seconds += duration
             totals.volume_kg = round(totals.volume_kg + float(volume), 2)
             totals.sets += sets
+            week_loads.append(muscle_load)
 
     days = list(week.values())
     return DashboardOverview(
@@ -102,6 +106,7 @@ def get_overview(
             total_volume_kg=round(sum(d.volume_kg for d in days), 2),
             total_sets=sum(d.sets for d in days),
             days=days,
+            muscle_load=sum_loads(week_loads),
         ),
         streak=compute_streak(all_days, today),
         heatmap=Heatmap(

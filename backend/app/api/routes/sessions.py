@@ -6,7 +6,8 @@ from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
 from app.core.time import as_utc, utcnow
-from app.models import User, WorkoutSession
+from app.models import Exercise, User, WorkoutSession
+from app.muscle_load import compute_muscle_load
 from app.schemas.session import SessionFinish, SessionRead
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -69,6 +70,11 @@ def finish_session(
     session.last_muscle_group = (
         payload.last_muscle_group.value if payload.last_muscle_group else None
     )
+    if session.workout_id is not None and payload.completed_sets:
+        exercises = db.scalars(select(Exercise).where(Exercise.workout_id == session.workout_id)).all()
+        session.muscle_load = compute_muscle_load(
+            exercises, {item.exercise_id: item.sets for item in payload.completed_sets}
+        )
     db.commit()
     return session
 

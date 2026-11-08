@@ -14,6 +14,9 @@ class SessaoTreino {
   final int seriesTotais;
   final GrupoMuscular? ultimoGrupoMuscular;
 
+  /// Séries por músculo nesta sessão (mesmos nomes do desenho do corpo).
+  final Map<String, double> cargaMuscular;
+
   const SessaoTreino({
     required this.id,
     this.treinoId,
@@ -25,6 +28,7 @@ class SessaoTreino {
     this.volumeTotalKg = 0,
     this.seriesTotais = 0,
     this.ultimoGrupoMuscular,
+    this.cargaMuscular = const {},
   });
 
   bool get emAndamento => finalizadaEm == null;
@@ -42,6 +46,13 @@ class SessaoTreino {
       volumeTotalKg: (json['total_volume_kg'] as num? ?? 0).toDouble(),
       seriesTotais: (json['total_sets'] as num? ?? 0).toInt(),
       ultimoGrupoMuscular: GrupoMuscular.fromApiOuNulo(json['last_muscle_group'] as String?),
+      cargaMuscular: lerCargaMuscular(json['muscle_load']),
     );
   }
 }
+
+/// {"chest": 8, "triceps": 4} → mapa de séries por músculo.
+Map<String, double> lerCargaMuscular(Object? json) => {
+      for (final MapEntry(:key, :value) in (json as Map<String, dynamic>? ?? const {}).entries)
+        key: (value as num).toDouble(),
+    };

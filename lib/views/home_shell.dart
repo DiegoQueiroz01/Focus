@@ -5,6 +5,7 @@ import 'package:focus/service/tema_controller.dart';
 import 'package:focus/views/dashboard_screen.dart';
 import 'package:focus/views/login_screen.dart';
 import 'package:focus/views/treinos_screen.dart';
+import 'package:focus/widgets/avatar_usuario.dart';
 
 enum Destino {
   inicio('Início', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
@@ -149,12 +150,7 @@ class _CabecalhoUsuario extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(28, 24, 16, 20),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: esquema.primary,
-                foregroundColor: esquema.onPrimary,
-                child: Text(usuario?.iniciais ?? '', style: const TextStyle(fontWeight: FontWeight.w700)),
-              ),
+              AvatarUsuario(usuario: usuario),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

@@ -42,3 +42,5 @@ class UserRead(BaseModel):
     id: int
     name: str
     email: str | None
+    # Foto de perfil, se existir. O app mostra as iniciais quando a URL não carrega.
+    avatar_url: str | None = None

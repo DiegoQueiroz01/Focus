@@ -19,6 +19,8 @@ class WeekSummary(BaseModel):
     total_volume_kg: float
     total_sets: int
     days: list[DayTotals]
+    # Séries por músculo somadas na semana.
+    muscle_load: dict[str, float]
 
 
 class Streak(BaseModel):

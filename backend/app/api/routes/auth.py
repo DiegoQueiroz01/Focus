@@ -1,3 +1,5 @@
+import hashlib
+
 from email_validator import EmailNotValidError, validate_email
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import func, select
@@ -63,6 +65,16 @@ def login(payload: LoginRequest, db: DbSession) -> TokenResponse:
     return _token_for(user)
 
 
+def avatar_url_for(user: User) -> str | None:
+    if user.avatar_url:
+        return user.avatar_url
+    if user.email and get_settings().gravatar_enabled:
+        digest = hashlib.sha256(user.email.strip().lower().encode()).hexdigest()
+        # d=404: sem foto cadastrada, o Gravatar responde 404 e o app mostra as iniciais.
+        return f"https://gravatar.com/avatar/{digest}?s=256&d=404"
+    return None
+
+
 @router.get("/me", response_model=UserRead)
-def me(user: CurrentUser) -> User:
-    return user
+def me(user: CurrentUser) -> UserRead:
+    return UserRead(id=user.id, name=user.name, email=user.email, avatar_url=avatar_url_for(user))

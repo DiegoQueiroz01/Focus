@@ -136,11 +136,6 @@ class _Conteudo extends StatelessWidget {
         if (exercicio.instrucoes.isNotEmpty) ...[
           const SizedBox(height: 28),
           const _Titulo('Como fazer'),
-          const SizedBox(height: 4),
-          Text(
-            'Instruções da base original, em inglês.',
-            style: tema.textTheme.bodySmall?.copyWith(color: secundario),
-          ),
           const SizedBox(height: 12),
           for (final (i, passo) in exercicio.instrucoes.indexed)
             Padding(

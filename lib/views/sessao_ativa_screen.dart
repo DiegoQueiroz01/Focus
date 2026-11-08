@@ -8,7 +8,9 @@ import 'package:focus/models/treino_model.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/service/progresso_sessao_storage.dart';
 import 'package:focus/utils/formatadores.dart';
+import 'package:focus/widgets/dialogo_padrao.dart';
 import 'package:focus/widgets/imagem_exercicio.dart';
+import 'package:focus/widgets/mapa_muscular.dart';
 
 /// Abre a tela de uma sessão em andamento. Se o plano não for informado, busca na API
 /// (ele pode ter sido excluído; nesse caso a sessão segue só com o cronômetro).
@@ -192,22 +194,17 @@ class _SessaoAtivaScreenState extends State<SessaoAtivaScreen> {
   }
 
   Future<void> _finalizar() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Finalizar treino?'),
-        content: Text(
-          _seriesPlanejadas > 0 && _seriesFeitas < _seriesPlanejadas
-              ? 'Você concluiu $_seriesFeitas de $_seriesPlanejadas séries. O treino será salvo assim mesmo.'
-              : 'O tempo, a carga e as séries serão salvos no seu histórico.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Continuar treinando')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Finalizar')),
-        ],
-      ),
+    final finalizar = await confirmar(
+      context,
+      icone: Icons.flag_rounded,
+      titulo: 'Finalizar treino?',
+      mensagem: _seriesPlanejadas > 0 && _seriesFeitas < _seriesPlanejadas
+          ? 'Você concluiu $_seriesFeitas de $_seriesPlanejadas séries. O treino será salvo assim mesmo.'
+          : 'O tempo, a carga e as séries serão salvos no seu histórico.',
+      rotuloConfirmar: 'Finalizar',
+      rotuloCancelar: 'Continuar treinando',
     );
-    if (confirmar != true) return;
+    if (!finalizar) return;
 
     setState(() => _encerrando = true);
     try {
@@ -216,6 +213,10 @@ class _SessaoAtivaScreenState extends State<SessaoAtivaScreen> {
         volumeKg: _volumeTotal,
         series: _seriesFeitas,
         ultimoGrupo: _ultimoGrupo,
+        seriesPorExercicio: {
+          for (final (i, exercicio) in _exercicios.indexed)
+            if (exercicio.id != null) exercicio.id!: _series[i].where((s) => s.feita).length,
+        },
       );
       await _progresso.apagar(widget.sessao.id);
       if (!mounted) return;
@@ -229,25 +230,15 @@ class _SessaoAtivaScreenState extends State<SessaoAtivaScreen> {
   }
 
   Future<void> _descartar() async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Descartar treino?'),
-        content: const Text('Esta sessão será apagada e não contará no seu histórico nem na sequência.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Descartar'),
-          ),
-        ],
-      ),
+    final descartar = await confirmar(
+      context,
+      icone: Icons.delete_outline_rounded,
+      titulo: 'Descartar treino?',
+      mensagem: 'Esta sessão será apagada e não contará no seu histórico nem na sequência.',
+      rotuloConfirmar: 'Descartar',
+      destrutivo: true,
     );
-    if (confirmar != true) return;
+    if (!descartar) return;
 
     setState(() => _encerrando = true);
     try {
@@ -262,20 +253,15 @@ class _SessaoAtivaScreenState extends State<SessaoAtivaScreen> {
   }
 
   Future<void> _aoTentarSair() async {
-    final sair = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sair do treino?'),
-        content: const Text(
-          'O cronômetro continua contando. Você pode voltar a este treino pelo painel inicial.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Ficar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Sair')),
-        ],
-      ),
+    final sair = await confirmar(
+      context,
+      icone: Icons.timer_outlined,
+      titulo: 'Sair do treino?',
+      mensagem: 'O cronômetro continua contando. Você pode voltar a este treino pelo painel inicial.',
+      rotuloConfirmar: 'Sair',
+      rotuloCancelar: 'Continuar treinando',
     );
-    if (sair == true && mounted) Navigator.pop(context, false);
+    if (sair && mounted) Navigator.pop(context, false);
   }
 
   void _mostrarErro(String mensagem) {
@@ -624,9 +610,12 @@ class _DialogoSerieState extends State<_DialogoSerie> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Série ${widget.numero}'),
-      content: Form(
+    return DialogoPadrao(
+      titulo: 'Série ${widget.numero}',
+      rotuloPrincipal: 'Salvar',
+      onPrincipal: _confirmar,
+      rotuloSecundario: 'Cancelar',
+      conteudo: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -669,15 +658,11 @@ class _DialogoSerieState extends State<_DialogoSerie> {
                 controlAffinity: ListTileControlAffinity.leading,
                 value: _aplicarSeguintes,
                 onChanged: (v) => setState(() => _aplicarSeguintes = v ?? false),
-                title: const Text('Aplicar às séries seguintes'),
+                title: const Text('Aplicar às séries seguintes', textAlign: TextAlign.start),
               ),
           ],
         ),
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
-        FilledButton(onPressed: _confirmar, child: const Text('Salvar')),
-      ],
     );
   }
 }
@@ -698,28 +683,34 @@ class _DialogoConcluido extends StatelessWidget {
             children: [
               Icon(icone, size: 20, color: esquema.onSurfaceVariant),
               const SizedBox(width: 12),
-              Expanded(child: Text(rotulo)),
+              Expanded(child: Text(rotulo, textAlign: TextAlign.start, style: TextStyle(color: esquema.onSurface))),
               Text(valor, style: tema.textTheme.titleSmall),
             ],
           ),
         );
 
-    return AlertDialog(
-      icon: Icon(Icons.emoji_events_rounded, color: esquema.primary, size: 36),
-      title: const Text('Treino concluído!'),
-      content: Column(
+    return DialogoPadrao(
+      icone: Icons.emoji_events_rounded,
+      titulo: 'Treino concluído!',
+      rotuloPrincipal: 'Fechar',
+      onPrincipal: () => Navigator.pop(context),
+      conteudo: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           linha(Icons.timer_outlined, 'Tempo', formatarDuracaoSegundos(sessao.duracaoSegundos)),
           linha(Icons.scale_outlined, 'Carga total', formatarVolume(sessao.volumeTotalKg)),
           linha(Icons.repeat_rounded, 'Séries', '${sessao.seriesTotais}'),
           if (sessao.ultimoGrupoMuscular != null)
             linha(Icons.accessibility_new_rounded, 'Último grupo', sessao.ultimoGrupoMuscular!.rotulo),
+          if (sessao.cargaMuscular.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('Músculos trabalhados', style: tema.textTheme.titleSmall?.copyWith(color: esquema.onSurface)),
+            const SizedBox(height: 10),
+            ResumoMuscular(cargaMuscular: sessao.cargaMuscular, maximoNaLista: 4),
+          ],
         ],
       ),
-      actions: [
-        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar')),
-      ],
     );
   }
 }
