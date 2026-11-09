@@ -28,6 +28,58 @@ MET = {
 }
 
 
+# Músculos que cada atividade trabalha (principais, secundários), no vocabulário do catálogo.
+MUSCLES: dict[GpsActivityType, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    GpsActivityType.RUN: (("quadriceps", "hamstrings", "glutes", "calves"), ("abdominals",)),
+    GpsActivityType.WALK: (("quadriceps", "glutes", "calves"), ("hamstrings",)),
+    GpsActivityType.TRAIL_RUN: (
+        ("quadriceps", "hamstrings", "glutes", "calves"),
+        ("abdominals", "adductors", "abductors"),
+    ),
+    GpsActivityType.HIKE: (("quadriceps", "glutes", "calves"), ("hamstrings", "lower back")),
+    GpsActivityType.RIDE: (("quadriceps", "glutes"), ("hamstrings", "calves")),
+    GpsActivityType.MOUNTAIN_BIKE: (
+        ("quadriceps", "glutes"),
+        ("hamstrings", "calves", "abdominals", "forearms"),
+    ),
+    GpsActivityType.INLINE_SKATE: (
+        ("quadriceps", "glutes", "abductors", "adductors"),
+        ("hamstrings", "calves", "abdominals"),
+    ),
+}
+
+# Minutos em movimento que valem uma "série" no desenho do corpo. A caminhada é mais
+# leve, então precisa de mais tempo para contar o mesmo.
+MINUTES_PER_SET = {
+    GpsActivityType.RUN: 5,
+    GpsActivityType.WALK: 10,
+    GpsActivityType.TRAIL_RUN: 5,
+    GpsActivityType.HIKE: 8,
+    GpsActivityType.RIDE: 6,
+    GpsActivityType.MOUNTAIN_BIKE: 5,
+    GpsActivityType.INLINE_SKATE: 6,
+}
+
+# Limite por atividade, para um pedal de 4 h não apagar o resto da semana no desenho.
+MAX_SETS_PER_ACTIVITY = 12
+SECONDARY_WEIGHT = 0.5
+
+
+def muscle_load(activity_type: GpsActivityType | str, moving_seconds: int) -> dict[str, float]:
+    """Séries equivalentes por músculo, na mesma escala dos treinos (ver app/muscle_load.py)."""
+    try:
+        kind = GpsActivityType(activity_type)
+    except ValueError:
+        return {}
+    sets = min(moving_seconds / 60 / MINUTES_PER_SET[kind], MAX_SETS_PER_ACTIVITY)
+    if sets <= 0:
+        return {}
+    primary, secondary = MUSCLES[kind]
+    load = {muscle: sets for muscle in primary}
+    load.update({muscle: sets * SECONDARY_WEIGHT for muscle in secondary})
+    return {muscle: round(value, 1) for muscle, value in sorted(load.items())}
+
+
 def estimate_calories(
     activity_type: GpsActivityType, moving_seconds: int, weight_kg: float = PESO_PADRAO_KG
 ) -> int:

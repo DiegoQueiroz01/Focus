@@ -123,6 +123,36 @@ void main() {
     expect(visao.mapa.totalAtividades, 5);
   });
 
+  test('VisaoGeral.fromJson soma treinos e atividades por GPS', () {
+    final semana = ResumoSemana.fromJson({
+      'start': '2026-11-02',
+      'end': '2026-11-08',
+      'total_sessions': 2,
+      'total_gps_activities': 3,
+      'total_duration_seconds': 9000,
+      'total_volume_kg': 1000.0,
+      'total_sets': 10,
+      'total_distance_m': 12500.0,
+      'days': [
+        {
+          'date': '2026-11-03',
+          'sessions': 0,
+          'gps_activities': 1,
+          'duration_seconds': 1800,
+          'volume_kg': 0.0,
+          'sets': 0,
+          'distance_m': 5000.0,
+        },
+      ],
+      'muscle_load': {'quadriceps': 6, 'abdominals': 3},
+    });
+
+    expect(semana.totalAtividades, 5);
+    expect(semana.totalDistanciaMetros, 12500);
+    expect(semana.dias.single.atividades, 1);
+    expect(semana.cargaMuscular['quadriceps'], 6);
+  });
+
   test('Pagina.fromJson lê metadados de paginação', () {
     final pagina = Pagina.fromJson(
       {'items': [], 'total': 42, 'offset': 20, 'limit': 20, 'has_more': true},

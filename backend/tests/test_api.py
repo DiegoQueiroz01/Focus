@@ -234,7 +234,13 @@ def test_overview_week_totals_heatmap_and_streak(client, auth_headers, session_f
     assert week["total_duration_seconds"] == expected_seconds
     today_totals = next(d for d in week["days"] if d["date"] == today.isoformat())
     assert today_totals == {
-        "date": today.isoformat(), "sessions": 2, "duration_seconds": 2400, "volume_kg": 1500.0, "sets": 14
+        "date": today.isoformat(),
+        "sessions": 2,
+        "gps_activities": 0,
+        "duration_seconds": 2400,
+        "volume_kg": 1500.0,
+        "sets": 14,
+        "distance_m": 0,
     }
 
     counts = {d["date"]: d["count"] for d in overview["heatmap"]["days"]}

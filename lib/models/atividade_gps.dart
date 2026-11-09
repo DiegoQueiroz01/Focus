@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:focus/models/sessao_treino.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Atividades ao ar livre que podem ser gravadas pelo GPS.
@@ -75,6 +76,9 @@ class AtividadeGps {
   /// Segundos gastos em cada km completo.
   final List<int> parciais;
 
+  /// Séries equivalentes por músculo (calculadas pelo servidor; vazio antes de salvar).
+  final Map<String, double> cargaMuscular;
+
   const AtividadeGps({
     this.id,
     required this.tipo,
@@ -91,6 +95,7 @@ class AtividadeGps {
     this.pontos = const [],
     this.trajeto = const [],
     this.parciais = const [],
+    this.cargaMuscular = const {},
   });
 
   double get distanciaKm => distanciaMetros / 1000;
@@ -117,6 +122,7 @@ class AtividadeGps {
         pontos: pontos,
         trajeto: trajeto,
         parciais: parciais,
+        cargaMuscular: cargaMuscular,
       );
 
   factory AtividadeGps.fromJson(Map<String, dynamic> json) {
@@ -143,6 +149,7 @@ class AtividadeGps {
       pontos: pontos,
       trajeto: pontos.isNotEmpty ? [for (final p in pontos) p.latLng] : previa,
       parciais: [for (final s in (json['splits'] as List<dynamic>? ?? const [])) (s as num).toInt()],
+      cargaMuscular: lerCargaMuscular(json['muscle_load']),
     );
   }
 

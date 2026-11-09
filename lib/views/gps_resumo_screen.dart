@@ -4,6 +4,7 @@ import 'package:focus/service/api_service.dart';
 import 'package:focus/utils/formatadores.dart';
 import 'package:focus/widgets/dialogo_padrao.dart';
 import 'package:focus/widgets/estado_vazio.dart';
+import 'package:focus/widgets/mapa_muscular.dart';
 import 'package:focus/widgets/mapa_trajeto.dart';
 import 'package:focus/widgets/metrica_gps.dart';
 
@@ -300,6 +301,28 @@ class _Conteudo extends StatelessWidget {
           const _Titulo('Parciais por km'),
           const SizedBox(height: 8),
           _Parciais(tipo: a.tipo, parciais: a.parciais),
+        ],
+        if (a.cargaMuscular.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const _Titulo('Músculos trabalhados'),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ResumoMuscular(cargaMuscular: a.cargaMuscular),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Séries equivalentes, calculadas pelo tempo em movimento. Também contam nos músculos da semana.',
+                    textAlign: TextAlign.center,
+                    style: tema.textTheme.bodySmall?.copyWith(color: esquema.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
         const SizedBox(height: 24),
         const _Titulo('Comentário'),

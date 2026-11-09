@@ -1,6 +1,7 @@
 import 'package:focus/models/sessao_treino.dart';
 
-/// Dados do painel: totais da semana atual, sequência de dias e mapa de atividades.
+/// Dados do painel: totais da semana atual, sequência de dias e mapa de atividades
+/// (treinos e atividades por GPS contam juntos).
 class VisaoGeral {
   final ResumoSemana semana;
   final Sequencia sequencia;
@@ -25,26 +26,41 @@ DateTime _lerData(Object? valor) {
 
 class TotaisDoDia {
   final DateTime data;
+
+  /// Treinos de academia iniciados no dia.
   final int sessoes;
+
+  /// Atividades gravadas pelo GPS no dia.
+  final int atividadesGps;
+
+  /// Tempo dos treinos somado ao tempo em movimento das atividades por GPS.
   final int duracaoSegundos;
   final double volumeKg;
   final int series;
+  final double distanciaMetros;
 
   const TotaisDoDia({
     required this.data,
     required this.sessoes,
+    this.atividadesGps = 0,
     required this.duracaoSegundos,
     required this.volumeKg,
     required this.series,
+    this.distanciaMetros = 0,
   });
+
+  /// Treinos e atividades por GPS somados.
+  int get atividades => sessoes + atividadesGps;
 
   factory TotaisDoDia.fromJson(Map<String, dynamic> json) {
     return TotaisDoDia(
       data: _lerData(json['date']),
       sessoes: (json['sessions'] as num).toInt(),
+      atividadesGps: (json['gps_activities'] as num? ?? 0).toInt(),
       duracaoSegundos: (json['duration_seconds'] as num).toInt(),
       volumeKg: (json['volume_kg'] as num).toDouble(),
       series: (json['sets'] as num).toInt(),
+      distanciaMetros: (json['distance_m'] as num? ?? 0).toDouble(),
     );
   }
 }
@@ -53,33 +69,42 @@ class ResumoSemana {
   final DateTime inicio;
   final DateTime fim;
   final int totalSessoes;
+  final int totalAtividadesGps;
   final int totalSegundos;
   final double totalVolumeKg;
   final int totalSeries;
+  final double totalDistanciaMetros;
   final List<TotaisDoDia> dias;
 
-  /// Séries por músculo somadas na semana.
+  /// Séries por músculo somadas na semana (treinos e atividades por GPS).
   final Map<String, double> cargaMuscular;
 
   const ResumoSemana({
     required this.inicio,
     required this.fim,
     required this.totalSessoes,
+    this.totalAtividadesGps = 0,
     required this.totalSegundos,
     required this.totalVolumeKg,
     required this.totalSeries,
+    this.totalDistanciaMetros = 0,
     required this.dias,
     this.cargaMuscular = const {},
   });
+
+  /// Treinos e atividades por GPS somados.
+  int get totalAtividades => totalSessoes + totalAtividadesGps;
 
   factory ResumoSemana.fromJson(Map<String, dynamic> json) {
     return ResumoSemana(
       inicio: _lerData(json['start']),
       fim: _lerData(json['end']),
       totalSessoes: (json['total_sessions'] as num).toInt(),
+      totalAtividadesGps: (json['total_gps_activities'] as num? ?? 0).toInt(),
       totalSegundos: (json['total_duration_seconds'] as num).toInt(),
       totalVolumeKg: (json['total_volume_kg'] as num).toDouble(),
       totalSeries: (json['total_sets'] as num).toInt(),
+      totalDistanciaMetros: (json['total_distance_m'] as num? ?? 0).toDouble(),
       dias: (json['days'] as List).map((d) => TotaisDoDia.fromJson(d as Map<String, dynamic>)).toList(),
       cargaMuscular: lerCargaMuscular(json['muscle_load']),
     );

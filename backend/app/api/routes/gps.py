@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
@@ -27,11 +28,16 @@ def list_activities(
     db: DbSession,
     limit: Annotated[int, Query(ge=1, le=100)] = 30,
     offset: Annotated[int, Query(ge=0)] = 0,
+    start: Annotated[datetime | None, Query(description="Início (inclusivo), ISO 8601")] = None,
+    end: Annotated[datetime | None, Query(description="Fim (exclusivo), ISO 8601")] = None,
 ) -> list[GpsActivity]:
+    query = select(GpsActivity).where(GpsActivity.user_id == user.id)
+    if start is not None:
+        query = query.where(GpsActivity.started_at >= as_utc(start))
+    if end is not None:
+        query = query.where(GpsActivity.started_at < as_utc(end))
     query = (
-        select(GpsActivity)
-        .where(GpsActivity.user_id == user.id)
-        .order_by(GpsActivity.started_at.desc(), GpsActivity.id.desc())
+        query.order_by(GpsActivity.started_at.desc(), GpsActivity.id.desc())
         .offset(offset)
         .limit(limit)
     )

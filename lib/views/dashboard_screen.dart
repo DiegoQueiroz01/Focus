@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:focus/models/atividade_gps.dart';
 import 'package:focus/models/sessao_treino.dart';
 import 'package:focus/models/usuario.dart';
 import 'package:focus/models/visao_geral.dart';
@@ -8,6 +9,7 @@ import 'package:focus/service/api_service.dart';
 import 'package:focus/utils/formatadores.dart';
 import 'package:focus/views/home_shell.dart';
 import 'package:focus/views/sessao_ativa_screen.dart';
+import 'package:focus/widgets/atividade_gps_tile.dart';
 import 'package:focus/widgets/atividades_do_dia.dart';
 import 'package:focus/widgets/estado_vazio.dart';
 import 'package:focus/widgets/mapa_atividades.dart';
@@ -15,6 +17,7 @@ import 'package:focus/widgets/mapa_muscular.dart';
 import 'package:focus/widgets/sessao_tile.dart';
 
 /// Tela inicial: treino em andamento, sequência, totais da semana, histórico e mapa de atividades.
+/// Treinos e atividades por GPS contam juntos em tudo.
 class PainelInicio extends StatefulWidget {
   const PainelInicio({super.key});
 
@@ -29,6 +32,7 @@ class _PainelInicioState extends State<PainelInicio> {
   Usuario? _usuario;
   VisaoGeral? _visao;
   List<SessaoTreino> _recentes = [];
+  List<AtividadeGps> _recentesGps = [];
   SessaoTreino? _sessaoAtiva;
   DateTime? _diaSelecionado;
   String? _erro;
@@ -51,6 +55,7 @@ class _PainelInicioState extends State<PainelInicio> {
         _api.getVisaoGeral(),
         _api.getSessoes(limite: _quantidadeRecentes),
         _api.getSessaoAtiva(),
+        _api.getAtividadesGps(limite: _quantidadeRecentes),
       ]);
       if (!mounted) return;
       setState(() {
@@ -58,6 +63,7 @@ class _PainelInicioState extends State<PainelInicio> {
         _visao = resultados[1] as VisaoGeral;
         _recentes = resultados[2] as List<SessaoTreino>;
         _sessaoAtiva = resultados[3] as SessaoTreino?;
+        _recentesGps = resultados[4] as List<AtividadeGps>;
       });
     } on ApiException catch (e) {
       if (mounted) setState(() => _erro = e.mensagem);
@@ -69,6 +75,28 @@ class _PainelInicioState extends State<PainelInicio> {
   Future<void> _abrirSessao(SessaoTreino sessao) async {
     await abrirSessaoAtiva(context, sessao);
     if (mounted) await _carregarDados();
+  }
+
+  Future<void> _abrirAtividadeGps(AtividadeGps atividade) async {
+    await abrirAtividadeGps(context, atividade);
+    if (mounted) await _carregarDados();
+  }
+
+  /// Treinos e atividades por GPS mais recentes, misturados pela data de início.
+  List<Widget> _itensRecentes() {
+    final itens = <(DateTime, Widget)>[
+      for (final sessao in _recentes)
+        (
+          sessao.iniciadaEm,
+          SessaoTile(
+            sessao: sessao,
+            onTap: () => sessao.emAndamento ? _abrirSessao(sessao) : _abrirDia(sessao.iniciadaEm),
+          ),
+        ),
+      for (final atividade in _recentesGps)
+        (atividade.iniciadaEm, AtividadeGpsTile(atividade: atividade, onTap: () => _abrirAtividadeGps(atividade))),
+    ]..sort((a, b) => b.$1.compareTo(a.$1));
+    return [for (final (_, item) in itens.take(_quantidadeRecentes)) item];
   }
 
   Future<void> _abrirDia(DateTime dia) async {
@@ -142,7 +170,7 @@ class _PainelInicioState extends State<PainelInicio> {
                       const MapaMuscular(),
                       const SizedBox(height: 12),
                       Text(
-                        'Finalize um treino marcando as séries feitas para ver aqui os músculos que você mais trabalhou.',
+                        'Finalize um treino marcando as séries feitas ou grave uma atividade no GPS para ver aqui os músculos que você mais trabalhou.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -156,17 +184,14 @@ class _PainelInicioState extends State<PainelInicio> {
         const SizedBox(height: 32),
         const _TituloSecao(titulo: 'Atividades recentes'),
         const SizedBox(height: 12),
-        if (_recentes.isEmpty)
+        if (_recentes.isEmpty && _recentesGps.isEmpty)
           const EstadoVazio(
             icone: Icons.fitness_center_rounded,
-            titulo: 'Nenhum treino ainda',
-            mensagem: 'Abra o menu ☰, vá em Treinos e toque em "Iniciar" em uma sessão.',
+            titulo: 'Nenhuma atividade ainda',
+            mensagem: 'Abra o menu ☰ e inicie um treino em Treinos ou grave uma corrida, pedal ou caminhada em GPS.',
           ),
-        for (final sessao in _recentes) ...[
-          SessaoTile(
-            sessao: sessao,
-            onTap: () => sessao.emAndamento ? _abrirSessao(sessao) : _abrirDia(sessao.iniciadaEm),
-          ),
+        for (final item in _itensRecentes()) ...[
+          item,
           const SizedBox(height: 10),
         ],
         const SizedBox(height: 22),
@@ -299,9 +324,9 @@ class _CartaoSequencia extends StatelessWidget {
     const laranja = Color(0xFFF97316);
 
     final mensagem = switch (sequencia) {
-      Sequencia(atual: 0) => 'Inicie um treino hoje para começar uma sequência.',
-      Sequencia(treinouHoje: false) => 'Inicie um treino hoje para não perder a sequência.',
-      _ => 'Você já treinou hoje. Continue amanhã!',
+      Sequencia(atual: 0) => 'Treine ou grave uma atividade no GPS hoje para começar uma sequência.',
+      Sequencia(treinouHoje: false) => 'Treine ou grave uma atividade no GPS hoje para não perder a sequência.',
+      _ => 'Você já se exercitou hoje. Continue amanhã!',
     };
 
     return Card(
@@ -377,7 +402,7 @@ class _PainelSemana extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Tempo de treino',
+                        'Tempo ativo',
                         style: tema.textTheme.bodyMedium?.copyWith(color: esquema.onPrimary.withValues(alpha: 0.8)),
                       ),
                       const SizedBox(height: 6),
@@ -397,9 +422,25 @@ class _PainelSemana extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _Metrica(icone: Icons.calendar_today_rounded, rotulo: 'Treinos', valor: '${semana.totalSessoes}'),
+              child: _Metrica(
+                icone: Icons.calendar_today_rounded,
+                rotulo: 'Atividades',
+                valor: '${semana.totalAtividades}',
+              ),
             ),
             const SizedBox(width: 12),
+            Expanded(
+              child: _Metrica(
+                icone: Icons.route_rounded,
+                rotulo: 'Distância',
+                valor: formatarDistancia(semana.totalDistanciaMetros),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
             Expanded(
               child: _Metrica(icone: Icons.scale_outlined, rotulo: 'Carga total', valor: formatarVolume(semana.totalVolumeKg)),
             ),
@@ -449,7 +490,7 @@ class _Metrica extends StatelessWidget {
   }
 }
 
-/// Barras de segunda a domingo com o tempo treinado em cada dia.
+/// Barras de segunda a domingo com o tempo ativo em cada dia (treinos e GPS).
 class _GraficoSemana extends StatelessWidget {
   final List<TotaisDoDia> dias;
   final ValueChanged<DateTime> onTapDia;
@@ -465,9 +506,9 @@ class _GraficoSemana extends StatelessWidget {
     final esquema = tema.colorScheme;
     final hoje = inicioDoDia(DateTime.now());
 
-    // Usa o tempo como medida; se nenhuma sessão foi finalizada, usa a quantidade.
+    // Usa o tempo como medida; se nenhuma atividade foi finalizada, usa a quantidade.
     final usarTempo = dias.any((d) => d.duracaoSegundos > 0);
-    double medida(TotaisDoDia d) => usarTempo ? d.duracaoSegundos.toDouble() : d.sessoes.toDouble();
+    double medida(TotaisDoDia d) => usarTempo ? d.duracaoSegundos.toDouble() : d.atividades.toDouble();
     final maximo = dias.map(medida).fold(0.0, (a, b) => a > b ? a : b);
 
     return Card(
@@ -487,9 +528,9 @@ class _GraficoSemana extends StatelessWidget {
                       children: [
                         SizedBox(
                           height: 16,
-                          child: dia.sessoes > 0
+                          child: dia.atividades > 0
                               ? Text(
-                                  usarTempo ? '${(dia.duracaoSegundos / 60).round()}m' : '${dia.sessoes}',
+                                  usarTempo ? '${(dia.duracaoSegundos / 60).round()}m' : '${dia.atividades}',
                                   style: tema.textTheme.labelSmall?.copyWith(color: esquema.onSurfaceVariant),
                                 )
                               : null,
@@ -501,7 +542,7 @@ class _GraficoSemana extends StatelessWidget {
                               ? 4
                               : 8 + (_alturaMaxima - 8) * (medida(dia) / maximo),
                           decoration: BoxDecoration(
-                            color: dia.sessoes > 0 ? esquema.primary : esquema.surfaceContainer,
+                            color: dia.atividades > 0 ? esquema.primary : esquema.surfaceContainer,
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),

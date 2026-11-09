@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Query
@@ -7,7 +7,8 @@ from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
 from app.core.time import local_date, utcnow
-from app.models import WorkoutSession
+from app.gps import muscle_load as gps_muscle_load
+from app.models import GpsActivity, WorkoutSession
 from app.muscle_load import sum_loads
 from app.schemas.dashboard import (
     DashboardOverview,
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 def compute_streak(days: set[date], today: date) -> Streak:
-    """Dias seguidos com pelo menos uma sessão iniciada.
+    """Dias seguidos com pelo menos uma atividade (treino ou atividade por GPS).
 
     Se o usuário ainda não treinou hoje, mas treinou ontem, a sequência continua
     valendo; ela só zera depois de um dia inteiro sem treino.
@@ -83,12 +84,16 @@ def get_overview(
     heatmap_counts: Counter[date] = Counter()
     week_loads: list[dict[str, float] | None] = []
 
-    for started_at, duration, volume, sets, muscle_load in rows:
+    def count_day(started_at: datetime) -> DayTotals | None:
+        """Marca o dia como ativo (sequência e mapa) e devolve os totais dele, se for desta semana."""
         day = local_date(started_at, offset)
         all_days.add(day)
         if heatmap_start <= day <= today:
             heatmap_counts[day] += 1
-        totals = week.get(day)
+        return week.get(day)
+
+    for started_at, duration, volume, sets, muscle_load in rows:
+        totals = count_day(started_at)
         if totals is not None:
             totals.sessions += 1
             totals.duration_seconds += duration
@@ -96,15 +101,34 @@ def get_overview(
             totals.sets += sets
             week_loads.append(muscle_load)
 
+    gps_rows = db.execute(
+        select(
+            GpsActivity.started_at,
+            GpsActivity.activity_type,
+            GpsActivity.moving_seconds,
+            GpsActivity.distance_m,
+        ).where(GpsActivity.user_id == user.id)
+    ).all()
+
+    for started_at, activity_type, moving_seconds, distance in gps_rows:
+        totals = count_day(started_at)
+        if totals is not None:
+            totals.gps_activities += 1
+            totals.duration_seconds += moving_seconds
+            totals.distance_m = round(totals.distance_m + distance, 1)
+            week_loads.append(gps_muscle_load(activity_type, moving_seconds))
+
     days = list(week.values())
     return DashboardOverview(
         week=WeekSummary(
             start=week_start,
             end=week_start + timedelta(days=6),
             total_sessions=sum(d.sessions for d in days),
+            total_gps_activities=sum(d.gps_activities for d in days),
             total_duration_seconds=sum(d.duration_seconds for d in days),
             total_volume_kg=round(sum(d.volume_kg for d in days), 2),
             total_sets=sum(d.sets for d in days),
+            total_distance_m=round(sum(d.distance_m for d in days), 1),
             days=days,
             muscle_load=sum_loads(week_loads),
         ),

@@ -237,12 +237,28 @@ class ApiService {
 
   // --- Atividades por GPS
 
-  Future<List<AtividadeGps>> getAtividadesGps({int offset = 0, int limite = 30}) async {
+  /// Atividades iniciadas no intervalo [inicio, fim), da mais recente para a mais antiga.
+  Future<List<AtividadeGps>> getAtividadesGps({
+    DateTime? inicio,
+    DateTime? fim,
+    int offset = 0,
+    int limite = 30,
+  }) async {
     final data = await _request<List<dynamic>>(() => _dio.get(
           '/gps-activities',
-          queryParameters: {'offset': offset, 'limit': limite},
+          queryParameters: {
+            'start': ?inicio?.toUtc().toIso8601String(),
+            'end': ?fim?.toUtc().toIso8601String(),
+            'offset': offset,
+            'limit': limite,
+          },
         ));
     return [for (final item in data) AtividadeGps.fromJson(item as Map<String, dynamic>)];
+  }
+
+  Future<List<AtividadeGps>> getAtividadesGpsDoDia(DateTime dia) {
+    final inicio = DateTime(dia.year, dia.month, dia.day);
+    return getAtividadesGps(inicio: inicio, fim: DateTime(dia.year, dia.month, dia.day + 1), limite: 100);
   }
 
   Future<AtividadeGps> getAtividadeGps(int id) async {

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
-from app.gps import GpsActivityType, route_preview
+from app.gps import GpsActivityType, muscle_load, route_preview
 
 # ~14h de gravação com um ponto a cada 2,5 s.
 MAX_ROUTE_POINTS = 20_000
@@ -80,6 +80,11 @@ class GpsActivitySummary(BaseModel):
     @property
     def route_preview(self) -> list[list[float]]:
         return route_preview(self.route)
+
+    @computed_field
+    @property
+    def muscle_load(self) -> dict[str, float]:
+        return muscle_load(self.activity_type, self.moving_seconds)
 
 
 class GpsActivityDetail(GpsActivitySummary):
