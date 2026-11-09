@@ -2,7 +2,7 @@
 
 from enum import Enum
 
-# Peso usado nas calorias enquanto o perfil não guarda o peso do usuário.
+# Peso usado nas calorias quando o usuário ainda não registrou o dele.
 PESO_PADRAO_KG = 70.0
 
 

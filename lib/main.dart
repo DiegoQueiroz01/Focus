@@ -26,15 +26,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: TemaController.instance,
-      builder: (context, modo, _) => MaterialApp(
+    final tema = TemaController.instance;
+    return ListenableBuilder(
+      listenable: tema,
+      builder: (context, _) => MaterialApp(
         title: 'Focus',
         navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.claro,
-        darkTheme: AppTheme.escuro,
-        themeMode: modo,
+        theme: AppTheme.construir(Brightness.light, tema.cor),
+        darkTheme: AppTheme.construir(Brightness.dark, tema.cor),
+        themeMode: tema.modo,
         home: const AuthGate(),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:focus/config/api_config.dart';
 import 'package:focus/models/atividade_gps.dart';
 import 'package:focus/models/catalogo_exercicio.dart';
+import 'package:focus/models/dieta.dart';
 import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/pagina.dart';
 import 'package:focus/models/sessao_treino.dart';
@@ -281,6 +282,97 @@ class ApiService {
   }
 
   Future<void> excluirAtividadeGps(int id) => _request<dynamic>(() => _dio.delete('/gps-activities/$id'));
+
+  // --- Perfil, peso e dieta
+
+  Future<PerfilNutricional> getPerfil() async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.get('/profile'));
+    return PerfilNutricional.fromJson(data);
+  }
+
+  Future<PerfilNutricional> salvarPerfil(RespostasPerfil respostas) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.put('/profile', data: respostas.toJson()));
+    return PerfilNutricional.fromJson(data);
+  }
+
+  Future<List<RegistroPeso>> getPesos({int limite = 90}) async {
+    final data = await _request<List<dynamic>>(() => _dio.get('/weights', queryParameters: {'limit': limite}));
+    return [for (final p in data) RegistroPeso.fromJson(p as Map<String, dynamic>)];
+  }
+
+  /// Registra o peso do dia (substitui se já houver um no mesmo dia).
+  Future<RegistroPeso> registrarPeso(double pesoKg, {DateTime? data}) async {
+    final resposta = await _request<Map<String, dynamic>>(() => _dio.post(
+          '/weights',
+          data: {'date': dataParaApi(data ?? DateTime.now()), 'weight_kg': pesoKg},
+        ));
+    return RegistroPeso.fromJson(resposta);
+  }
+
+  Future<void> excluirPeso(int id) => _request<dynamic>(() => _dio.delete('/weights/$id'));
+
+  /// Busca na base TACO e nos alimentos do usuário. Sem termo, devolve os usados recentemente.
+  Future<List<Alimento>> buscarAlimentos(String? busca, {int limite = 40}) async {
+    final termo = busca?.trim();
+    final data = await _request<List<dynamic>>(() => _dio.get(
+          '/foods',
+          queryParameters: {
+            if (termo != null && termo.isNotEmpty) 'q': termo,
+            'limit': limite,
+          },
+        ));
+    return [for (final a in data) Alimento.fromJson(a as Map<String, dynamic>)];
+  }
+
+  Future<Alimento> criarAlimento(NovoAlimento alimento) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.post('/foods/custom', data: alimento.toJson()));
+    return Alimento.fromJson(data);
+  }
+
+  Future<Alimento> getAlimento(String id) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.get('/foods/${Uri.encodeComponent(id)}'));
+    return Alimento.fromJson(data);
+  }
+
+  Future<DiaDieta> getDiaDieta(DateTime dia) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.get('/diet/days/${dataParaApi(dia)}'));
+    return DiaDieta.fromJson(data);
+  }
+
+  Future<RegistroAlimento> registrarAlimento({
+    required DateTime dia,
+    required Refeicao refeicao,
+    required String alimentoId,
+    required double gramas,
+    String? rotuloPorcao,
+  }) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.post(
+          '/diet/entries',
+          data: {
+            'date': dataParaApi(dia),
+            'meal': refeicao.valorApi,
+            'food_id': alimentoId,
+            'grams': gramas,
+            'portion_label': rotuloPorcao,
+          },
+        ));
+    return RegistroAlimento.fromJson(data);
+  }
+
+  Future<RegistroAlimento> atualizarRegistroAlimento(
+    int id, {
+    required Refeicao refeicao,
+    required double gramas,
+    String? rotuloPorcao,
+  }) async {
+    final data = await _request<Map<String, dynamic>>(() => _dio.put(
+          '/diet/entries/$id',
+          data: {'meal': refeicao.valorApi, 'grams': gramas, 'portion_label': rotuloPorcao},
+        ));
+    return RegistroAlimento.fromJson(data);
+  }
+
+  Future<void> excluirRegistroAlimento(int id) => _request<dynamic>(() => _dio.delete('/diet/entries/$id'));
 
   // --- Infra
 

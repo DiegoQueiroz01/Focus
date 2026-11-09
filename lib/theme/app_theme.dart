@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:focus/theme/cor_destaque.dart';
 
 class AppTheme {
   AppTheme._();
 
-  static const Color _marca = Color(0xFF16A34A);
   static const double raio = 16;
 
-  static ThemeData get claro => _construir(Brightness.light);
-  static ThemeData get escuro => _construir(Brightness.dark);
+  static ThemeData get claro => construir(Brightness.light);
+  static ThemeData get escuro => construir(Brightness.dark);
 
-  static ThemeData _construir(Brightness brilho) {
+  /// Texto legível em cima da cor: branco nas escuras, quase preto (do mesmo tom) nas claras.
+  static Color _textoSobre(Color cor) {
+    if (ThemeData.estimateBrightnessForColor(cor) == Brightness.dark) return Colors.white;
+    final hsl = HSLColor.fromColor(cor);
+    return hsl.withLightness(0.1).withSaturation((hsl.saturation * 0.8).clamp(0, 1)).toColor();
+  }
+
+  static ThemeData construir(Brightness brilho, [CorDestaque cor = CorDestaque.padrao]) {
     final escuro = brilho == Brightness.dark;
-    final base = ColorScheme.fromSeed(seedColor: _marca, brightness: brilho);
+    final primaria = cor.para(brilho);
+    final base = ColorScheme.fromSeed(seedColor: cor.claro, brightness: brilho);
     final esquema = base.copyWith(
-      primary: escuro ? const Color(0xFF4ADE80) : _marca,
-      onPrimary: escuro ? const Color(0xFF052E16) : Colors.white,
+      primary: primaria,
+      onPrimary: _textoSobre(primaria),
       surface: escuro ? const Color(0xFF0F1113) : const Color(0xFFF7F8F7),
       onSurface: escuro ? const Color(0xFFECEDEC) : const Color(0xFF111312),
       onSurfaceVariant: escuro ? const Color(0xFF9BA19D) : const Color(0xFF6B716D),

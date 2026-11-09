@@ -1,0 +1,10 @@
+[
+ {"id": "extra:whey", "name": "Whey protein, concentrado, pó", "category": "Suplementos", "kcal": 400, "protein": 78, "carbs": 9, "fat": 6, "fiber": 0, "sodium_mg": 200, "portions": [{"label": "1 scoop", "grams": 30}]},
+ {"id": "extra:macarrao_cozido", "name": "Macarrão, trigo, cozido", "category": "Cereais e derivados", "kcal": 158, "protein": 5.8, "carbs": 30.9, "fat": 0.9, "fiber": 1.8, "sodium_mg": 1, "portions": [{"label": "1 pegador", "grams": 110}, {"label": "1 prato raso", "grams": 220}]},
+ {"id": "extra:tapioca_goma", "name": "Tapioca, goma hidratada", "category": "Cereais e derivados", "kcal": 240, "protein": 0, "carbs": 60, "fat": 0, "fiber": 0, "sodium_mg": 0, "portions": [{"label": "1 tapioca média", "grams": 50}]},
+ {"id": "extra:pasta_amendoim", "name": "Pasta de amendoim, integral", "category": "Nozes e sementes", "kcal": 588, "protein": 25.1, "carbs": 20, "fat": 50.4, "fiber": 6, "sodium_mg": 17, "portions": [{"label": "1 colher de sopa", "grams": 15}]},
+ {"id": "extra:pao_forma", "name": "Pão, trigo, forma, tradicional", "category": "Cereais e derivados", "kcal": 266, "protein": 8.9, "carbs": 49.4, "fat": 3.3, "fiber": 2.7, "sodium_mg": 490, "portions": [{"label": "1 fatia", "grams": 25}]},
+ {"id": "extra:granola", "name": "Granola, tradicional", "category": "Cereais e derivados", "kcal": 471, "protein": 10, "carbs": 64, "fat": 20, "fiber": 7, "sodium_mg": 26, "portions": [{"label": "1 colher de sopa", "grams": 10}, {"label": "1 xícara", "grams": 100}]},
+ {"id": "extra:crepioca", "name": "Crepioca (1 ovo + 2 colheres de goma)", "category": "Alimentos preparados", "kcal": 196, "protein": 7.6, "carbs": 25, "fat": 6.4, "fiber": 0, "sodium_mg": 85, "portions": [{"label": "1 unidade", "grams": 80}]},
+ {"id": "extra:agua", "name": "Água", "category": "Bebidas (alcoólicas e não alcoólicas)", "kcal": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0, "sodium_mg": 0, "portions": [{"label": "1 copo (250 ml)", "grams": 250}]}
+]

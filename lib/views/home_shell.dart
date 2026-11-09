@@ -3,14 +3,18 @@ import 'package:focus/models/usuario.dart';
 import 'package:focus/service/api_service.dart';
 import 'package:focus/service/tema_controller.dart';
 import 'package:focus/views/dashboard_screen.dart';
+import 'package:focus/views/dieta_screen.dart';
 import 'package:focus/views/gps_screen.dart';
 import 'package:focus/views/login_screen.dart';
+import 'package:focus/views/peso_screen.dart';
 import 'package:focus/views/treinos_screen.dart';
 import 'package:focus/widgets/avatar_usuario.dart';
+import 'package:focus/widgets/seletor_cores.dart';
 
 enum Destino {
   inicio('Início', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
   treinos('Treinos', Icons.fitness_center_outlined, Icons.fitness_center_rounded),
+  dieta('Dieta', Icons.restaurant_menu_outlined, Icons.restaurant_menu_rounded),
   gps('GPS', Icons.route_outlined, Icons.route_rounded);
 
   final String rotulo;
@@ -50,6 +54,7 @@ class HomeShellState extends State<HomeShell> {
       body: switch (_destino) {
         Destino.inicio => const PainelInicio(key: ValueKey(Destino.inicio)),
         Destino.treinos => const TreinoScreen(key: ValueKey(Destino.treinos)),
+        Destino.dieta => const DietaScreen(key: ValueKey(Destino.dieta)),
         Destino.gps => const GpsScreen(key: ValueKey(Destino.gps)),
       },
     );
@@ -107,9 +112,22 @@ class _MenuLateral extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 28, vertical: 12),
           child: Divider(),
         ),
-        ValueListenableBuilder<ThemeMode>(
-          valueListenable: TemaController.instance,
-          builder: (context, _, _) {
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: ListTile(
+            shape: const StadiumBorder(),
+            leading: const Icon(Icons.monitor_weight_outlined),
+            title: const Text('Meu peso'),
+            onTap: () {
+              final navegador = Navigator.of(context);
+              navegador.pop(); // fecha o menu
+              navegador.push(MaterialPageRoute(builder: (_) => const PesoScreen()));
+            },
+          ),
+        ),
+        ListenableBuilder(
+          listenable: TemaController.instance,
+          builder: (context, _) {
             final escuro = tema.brightness == Brightness.dark;
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -122,6 +140,20 @@ class _MenuLateral extends StatelessWidget {
               ),
             );
           },
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: ListTile(
+            shape: const StadiumBorder(),
+            leading: const Icon(Icons.palette_outlined),
+            title: const Text('Cores do app'),
+            trailing: Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(color: esquema.primary, shape: BoxShape.circle),
+            ),
+            onTap: () => mostrarSeletorCores(context),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),

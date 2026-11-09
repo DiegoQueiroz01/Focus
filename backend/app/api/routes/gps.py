@@ -6,7 +6,8 @@ from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
 from app.core.time import as_utc
-from app.gps import estimate_calories
+from app.api.routes.diet import latest_weight
+from app.gps import PESO_PADRAO_KG, estimate_calories
 from app.models import GpsActivity, User
 from app.schemas.gps import GpsActivityCreate, GpsActivityDetail, GpsActivitySummary, GpsCommentUpdate
 
@@ -20,6 +21,12 @@ def _get_owned(db: DbSession, user: User, activity_id: int) -> GpsActivity:
     if activity is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Atividade não encontrada")
     return activity
+
+
+def _weight_kg(db: DbSession, user: User) -> float:
+    """Peso atual do usuário (último registro) ou o padrão, se ele ainda não informou."""
+    entry = latest_weight(db, user.id)
+    return entry.weight_kg if entry else PESO_PADRAO_KG
 
 
 @router.get("", response_model=list[GpsActivitySummary])
@@ -52,7 +59,7 @@ def create_activity(payload: GpsActivityCreate, user: CurrentUser, db: DbSession
         activity_type=payload.activity_type.value,
         started_at=as_utc(payload.started_at),
         finished_at=as_utc(payload.finished_at),
-        calories=estimate_calories(payload.activity_type, payload.moving_seconds),
+        calories=estimate_calories(payload.activity_type, payload.moving_seconds, _weight_kg(db, user)),
     )
     db.add(activity)
     db.commit()
