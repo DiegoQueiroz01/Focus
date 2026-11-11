@@ -7,6 +7,7 @@ import 'package:focus/views/dieta_screen.dart';
 import 'package:focus/views/gps_screen.dart';
 import 'package:focus/views/login_screen.dart';
 import 'package:focus/views/peso_screen.dart';
+import 'package:focus/views/relogio_screen.dart';
 import 'package:focus/views/treinos_screen.dart';
 import 'package:focus/widgets/avatar_usuario.dart';
 import 'package:focus/widgets/seletor_cores.dart';
@@ -15,7 +16,8 @@ enum Destino {
   inicio('Início', Icons.space_dashboard_outlined, Icons.space_dashboard_rounded),
   treinos('Treinos', Icons.fitness_center_outlined, Icons.fitness_center_rounded),
   dieta('Dieta', Icons.restaurant_menu_outlined, Icons.restaurant_menu_rounded),
-  gps('GPS', Icons.route_outlined, Icons.route_rounded);
+  gps('GPS', Icons.route_outlined, Icons.route_rounded),
+  relogio('Relógio', Icons.watch_outlined, Icons.watch_rounded);
 
   final String rotulo;
   final IconData icone;
@@ -56,6 +58,7 @@ class HomeShellState extends State<HomeShell> {
         Destino.treinos => const TreinoScreen(key: ValueKey(Destino.treinos)),
         Destino.dieta => const DietaScreen(key: ValueKey(Destino.dieta)),
         Destino.gps => const GpsScreen(key: ValueKey(Destino.gps)),
+        Destino.relogio => const RelogioScreen(key: ValueKey(Destino.relogio)),
       },
     );
   }

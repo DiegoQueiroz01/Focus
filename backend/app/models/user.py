@@ -9,6 +9,7 @@ from app.models.base import Base, TimestampMixin
 if TYPE_CHECKING:
     from app.models.diet import CustomFood, FoodEntry, WeightEntry
     from app.models.gps_activity import GpsActivity
+    from app.models.health_day import HealthDay
     from app.models.workout import Workout
     from app.models.workout_session import WorkoutSession
 
@@ -45,6 +46,9 @@ class User(TimestampMixin, Base):
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     gps_activities: Mapped[list["GpsActivity"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
+    )
+    health_days: Mapped[list["HealthDay"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
     weight_entries: Mapped[list["WeightEntry"]] = relationship(

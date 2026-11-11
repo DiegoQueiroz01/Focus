@@ -1,5 +1,6 @@
 package com.example.focus
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity é exigida pelo Health Connect para abrir a tela de permissões.
+class MainActivity : FlutterFragmentActivity()

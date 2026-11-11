@@ -63,12 +63,12 @@ String formatarCarga(double kg) {
   return '$texto kg';
 }
 
+/// Inteiro com separador de milhar: "12.480".
+String formatarMilhar(int valor) =>
+    valor.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+
 /// Volume total levantado: "850 kg", "12.480 kg".
-String formatarVolume(double kg) {
-  final inteiro = kg.round().toString();
-  final comPontos = inteiro.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
-  return '$comPontos kg';
-}
+String formatarVolume(double kg) => '${formatarMilhar(kg.round())} kg';
 
 DateTime inicioDoDia(DateTime data) => DateTime(data.year, data.month, data.day);
 

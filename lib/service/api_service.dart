@@ -6,6 +6,7 @@ import 'package:focus/models/catalogo_exercicio.dart';
 import 'package:focus/models/dieta.dart';
 import 'package:focus/models/grupo_muscular.dart';
 import 'package:focus/models/pagina.dart';
+import 'package:focus/models/saude.dart';
 import 'package:focus/models/sessao_treino.dart';
 import 'package:focus/models/treino_model.dart';
 import 'package:focus/models/usuario.dart';
@@ -373,6 +374,29 @@ class ApiService {
   }
 
   Future<void> excluirRegistroAlimento(int id) => _request<dynamic>(() => _dio.delete('/diet/entries/$id'));
+
+  // --- Relógio (dados do Health Connect)
+
+  /// Envia os resumos diários. Reenviar um dia atualiza o que já estava salvo.
+  Future<void> enviarResumosSaude(List<ResumoSaudeDia> dias) async {
+    const porEnvio = 60; // a API aceita até 120 dias por vez
+    for (var i = 0; i < dias.length; i += porEnvio) {
+      final lote = dias.sublist(i, i + porEnvio > dias.length ? dias.length : i + porEnvio);
+      await _request<dynamic>(() => _dio.put(
+            '/health-data/days',
+            data: {'days': [for (final d in lote) d.toJson()]},
+          ));
+    }
+  }
+
+  /// Dias com dados do relógio entre [inicio] e [fim] (inclusive), do mais antigo ao mais recente.
+  Future<List<ResumoSaudeDia>> getResumosSaude({required DateTime inicio, required DateTime fim}) async {
+    final data = await _request<List<dynamic>>(() => _dio.get(
+          '/health-data/days',
+          queryParameters: {'start': dataParaApi(inicio), 'end': dataParaApi(fim)},
+        ));
+    return [for (final d in data) ResumoSaudeDia.fromJson(d as Map<String, dynamic>)];
+  }
 
   // --- Infra
 
